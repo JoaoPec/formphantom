@@ -74,7 +74,6 @@
       <div class="dfa-body"></div>
       <div class="dfa-footer">
         <button class="dfa-btn dfa-btn-danger" id="dfa-cancel">Cancelar</button>
-        <button class="dfa-btn dfa-btn-secondary" id="dfa-toggle">Inverter seleção</button>
         <button class="dfa-btn dfa-btn-primary" id="dfa-confirm">Confirmar</button>
       </div>
     `;
@@ -83,13 +82,6 @@
 
     el.querySelector('.dfa-close').addEventListener('click', hide);
     el.querySelector('#dfa-cancel').addEventListener('click', hide);
-
-    el.querySelector('#dfa-toggle').addEventListener('click', () => {
-      el.querySelectorAll('.dfa-check').forEach(ch => {
-        ch.checked = !ch.checked;
-        ch.closest('.dfa-field-row').classList.toggle('disabled', !ch.checked);
-      });
-    });
 
     el.querySelectorAll('.dfa-check').forEach(ch => {
       ch.addEventListener('change', () => {

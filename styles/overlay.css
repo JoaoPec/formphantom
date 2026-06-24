@@ -19,7 +19,10 @@
   overflow: hidden;
 }
 
-#dfa-overlay * { box-sizing: border-box; }
+#dfa-overlay * {
+  box-sizing: border-box !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}
 
 .dfa-header {
   display: flex;
@@ -54,14 +57,14 @@
 }
 
 .dfa-field-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding: 6px;
-  background: #161b22;
-  border: 1px solid #21262d;
-  border-radius: 8px;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  margin: 0 0 8px 0 !important;
+  padding: 8px !important;
+  background: #161b22 !important;
+  border: 1px solid #21262d !important;
+  border-radius: 8px !important;
 }
 
 .dfa-field-row.disabled {
@@ -69,56 +72,79 @@
 }
 
 .dfa-field-row .dfa-check {
-  margin-top: 6px;
-  accent-color: #58a6ff;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  flex: 0 0 16px !important;
+  display: block !important;
+  margin: 6px 0 0 0 !important;
+  padding: 0 !important;
+  accent-color: #58a6ff !important;
+  opacity: 1 !important;
 }
 
 .dfa-field-info {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
 }
 
 .dfa-field-info label {
-  display: block;
-  font-size: 11px;
-  color: #8b949e;
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  display: block !important;
+  font-size: 11px !important;
+  color: #b8c2d6 !important;
+  margin: 0 0 4px 0 !important;
+  padding: 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1.25 !important;
 }
 
 .dfa-field-info .dfa-tag {
-  display: inline-block;
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: #1f6feb20;
-  color: #58a6ff;
-  margin-bottom: 3px;
+  display: inline-block !important;
+  font-size: 10px !important;
+  padding: 1px 6px !important;
+  border-radius: 10px !important;
+  background: #1f6feb20 !important;
+  color: #58a6ff !important;
+  margin: 0 0 4px 0 !important;
+  line-height: 1.4 !important;
 }
 
 .dfa-field-info input,
 .dfa-field-info textarea,
 .dfa-field-info select {
-  width: 100%;
-  background: #0f1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  padding: 5px 8px;
-  color: #c9d1d9;
-  font-size: 12px;
-  outline: none;
+  width: 100% !important;
+  background: #090d14 !important;
+  border: 1px solid #30363d !important;
+  border-radius: 6px !important;
+  padding: 8px 10px !important;
+  color: #f4f7fb !important;
+  -webkit-text-fill-color: #f4f7fb !important;
+  caret-color: #58a6ff !important;
+  opacity: 1 !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
 }
 
 .dfa-field-info input:focus,
 .dfa-field-info textarea:focus,
 .dfa-field-info select:focus {
-  border-color: #58a6ff;
+  border-color: #58a6ff !important;
 }
 
 .dfa-field-info textarea {
-  resize: vertical;
-  min-height: 40px;
+  resize: vertical !important;
+  min-height: 48px !important;
+}
+
+.dfa-field-info input::placeholder,
+.dfa-field-info textarea::placeholder {
+  color: #768195 !important;
+  -webkit-text-fill-color: #768195 !important;
 }
 
 .dfa-footer {

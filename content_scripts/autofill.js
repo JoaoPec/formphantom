@@ -245,6 +245,81 @@
     }));
   }
 
+  function hasUsableProfile(profile) {
+    if (!profile) return false;
+    return ['fullName', 'firstName', 'email', 'phone', 'linkedin', 'portfolio', 'summary', 'skills']
+      .some(key => profile[key] !== undefined && String(profile[key]).trim() !== '');
+  }
+
+  function getPageSignalText() {
+    const title = document.title || '';
+    const headings = Array.from(document.querySelectorAll('h1, h2, h3'))
+      .slice(0, 12)
+      .map(el => el.innerText || el.textContent || '')
+      .join(' ');
+    const labels = Array.from(document.querySelectorAll('label, button, [aria-label], input[placeholder], textarea[placeholder]'))
+      .slice(0, 80)
+      .map(el => [
+        el.innerText,
+        el.textContent,
+        el.getAttribute('aria-label'),
+        el.getAttribute('placeholder'),
+        el.name,
+        el.id
+      ].filter(Boolean).join(' '))
+      .join(' ');
+    return normalize(`${location.hostname} ${location.pathname} ${title} ${headings} ${labels}`);
+  }
+
+  function looksLikeJobApplication(platformMappings, plan) {
+    const signal = getPageSignalText();
+    const jobSignals = [
+      'vaga', 'vagas', 'carreira', 'carreiras', 'candidatura', 'candidate',
+      'application', 'apply', 'job', 'jobs', 'resume', 'curriculo', 'cv',
+      'linkedin', 'gupy', 'greenhouse', 'lever', 'workable', 'indeed'
+    ];
+    const fieldSignals = ['fullName', 'firstName', 'lastName', 'email', 'phone', 'linkedin', 'resumeText', 'portfolio'];
+    const matchedFieldCount = new Set(plan.map(item => item.key).filter(key => fieldSignals.includes(key))).size;
+    const platformKnown = Boolean(platformMappings?.platform);
+    const hasJobSignal = jobSignals.some(term => signal.includes(normalize(term)));
+    return plan.length >= 2 && matchedFieldCount >= 2 && (platformKnown || hasJobSignal);
+  }
+
+  function autoPromptKey() {
+    return `__formphantom_auto_prompted:${location.origin}${location.pathname}`;
+  }
+
+  function maybeShowAutoPrompt() {
+    if (window.__DFA_AutoPromptStarted) return;
+    window.__DFA_AutoPromptStarted = true;
+
+    window.setTimeout(() => {
+      if (sessionStorage.getItem(autoPromptKey()) === '1') return;
+      if (document.getElementById('dfa-overlay')) return;
+
+      chrome.storage.local.get(['profile', 'resumeText'], (res) => {
+        const profile = res.profile || {};
+        if (!hasUsableProfile(profile)) return;
+
+        const data = { ...profile, resumeText: res.resumeText || '' };
+        const platformMappings = getPlatformMappings();
+        const { plan, platform } = buildFillPlan(data, platformMappings);
+        if (!looksLikeJobApplication(platformMappings, plan)) return;
+
+        const serializable = serializablePlan(plan);
+        if (!serializable.length) return;
+
+        sessionStorage.setItem(autoPromptKey(), '1');
+        window.__DFA_Overlay.show(plan, serializable, async (approvedPlan) => {
+          const results = await executePlan(approvedPlan);
+          window.__DFA_Overlay.hide();
+          console.log('[DevFormAutofill] Auto prompt results:', results);
+        });
+        console.log(`[DevFormAutofill] Sugestão automática aberta. ${serializable.length} campos detectados (${platform}).`);
+      });
+    }, 900);
+  }
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action !== 'startAutofill') return true;
 
@@ -270,4 +345,10 @@
   });
 
   window.__DFA_Autofill = { buildFillPlan, executePlan, setFieldValue, findSelectOption };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', maybeShowAutoPrompt, { once: true });
+  } else {
+    maybeShowAutoPrompt();
+  }
 })();
