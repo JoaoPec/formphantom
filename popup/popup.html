@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dev Form Autofill</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Dev Form Autofill</h1>
+    <span class="version">v1.0</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="profile">Perfil</button>
+    <button class="tab-btn" data-tab="pdf">Currículo PDF</button>
+    <button class="tab-btn" data-tab="actions">Ações</button>
+  </div>
+
+  <div id="profile" class="tab-content active">
+    <form id="profileForm">
+      <fieldset>
+        <legend>Dados Pessoais</legend>
+        <div class="field-row">
+          <label>Nome completo</label>
+          <input type="text" data-key="fullName" placeholder="João da Silva">
+        </div>
+        <div class="field-row two-col">
+          <div>
+            <label>Primeiro nome</label>
+            <input type="text" data-key="firstName" placeholder="João">
+          </div>
+          <div>
+            <label>Sobrenome</label>
+            <input type="text" data-key="lastName" placeholder="Silva">
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div>
+            <label>Email</label>
+            <input type="email" data-key="email" placeholder="joao@email.com">
+          </div>
+          <div>
+            <label>Telefone</label>
+            <input type="tel" data-key="phone" placeholder="(11) 98765-4321">
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div>
+            <label>CPF</label>
+            <input type="text" data-key="cpf" placeholder="000.000.000-00">
+          </div>
+          <div>
+            <label>CEP</label>
+            <input type="text" data-key="postalCode" placeholder="00000-000">
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Endereço completo</label>
+          <input type="text" data-key="address" placeholder="Rua, número, complemento">
+        </div>
+        <div class="field-row three-col">
+          <div>
+            <label>Cidade</label>
+            <input type="text" data-key="city" placeholder="São Paulo">
+          </div>
+          <div>
+            <label>Estado</label>
+            <input type="text" data-key="state" placeholder="SP">
+          </div>
+          <div>
+            <label>País</label>
+            <input type="text" data-key="country" placeholder="Brasil">
+          </div>
+        </div>
+        <div class="field-row three-col">
+          <div>
+            <label>Gênero</label>
+            <select data-key="gender">
+              <option value="">Selecione</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Não-binário">Não-binário</option>
+              <option value="Prefiro não dizer">Prefiro não dizer</option>
+            </select>
+          </div>
+          <div>
+            <label>Raça/Etnia</label>
+            <select data-key="ethnicity">
+              <option value="">Selecione</option>
+              <option value="Branco">Branco</option>
+              <option value="Pardo">Pardo</option>
+              <option value="Preto">Preto</option>
+              <option value="Amarelo">Amarelo</option>
+              <option value="Indígena">Indígena</option>
+              <option value="Prefiro não dizer">Prefiro não dizer</option>
+            </select>
+          </div>
+          <div>
+            <label>PCD?</label>
+            <select data-key="disability">
+              <option value="">Selecione</option>
+              <option value="Não">Não</option>
+              <option value="Sim - física">Sim - física</option>
+              <option value="Sim - visual">Sim - visual</option>
+              <option value="Sim - auditiva">Sim - auditiva</option>
+              <option value="Sim - intelectual">Sim - intelectual</option>
+              <option value="Sim - múltipla">Sim - múltipla</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Profissional</legend>
+        <div class="field-row">
+          <label>LinkedIn</label>
+          <input type="url" data-key="linkedin" placeholder="https://linkedin.com/in/...">
+        </div>
+        <div class="field-row two-col">
+          <div>
+            <label>GitHub</label>
+            <input type="url" data-key="github" placeholder="https://github.com/...">
+          </div>
+          <div>
+            <label>Portfólio</label>
+            <input type="url" data-key="portfolio" placeholder="https://meusite.com">
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div>
+            <label>Cargo atual</label>
+            <input type="text" data-key="currentRole" placeholder="Desenvolvedor Full Stack">
+          </div>
+          <div>
+            <label>Empresa atual</label>
+            <input type="text" data-key="currentCompany" placeholder="Empresa XYZ">
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div>
+            <label>Anos de experiência</label>
+            <input type="number" data-key="experienceYears" placeholder="5">
+          </div>
+          <div>
+            <label>Pretensão salarial</label>
+            <input type="text" data-key="salaryExpectation" placeholder="R$ 10.000,00">
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Disponibilidade</label>
+          <select data-key="availability">
+            <option value="">Selecione</option>
+            <option value="Imediata">Imediata</option>
+            <option value="1 semana">1 semana</option>
+            <option value="2 semanas">2 semanas</option>
+            <option value="1 mês">1 mês</option>
+            <option value="Negociável">Negociável</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label>Resumo / Sobre mim</label>
+          <textarea data-key="summary" rows="4" placeholder="Breve resumo profissional..."></textarea>
+        </div>
+        <div class="field-row">
+          <label>Formação acadêmica</label>
+          <textarea data-key="education" rows="3" placeholder="Bacharelado em Ciência da Computação - USP (2018-2022)"></textarea>
+        </div>
+        <div class="field-row">
+          <label>Skills principais</label>
+          <input type="text" data-key="skills" placeholder="React, Node.js, TypeScript, Python, AWS">
+        </div>
+      </fieldset>
+
+      <div class="actions-row">
+        <button type="submit" class="btn-primary">Salvar Perfil</button>
+        <span id="saveStatus" class="status-msg"></span>
+      </div>
+    </form>
+  </div>
+
+  <div id="pdf" class="tab-content">
+    <div class="upload-area">
+      <label for="pdfInput" class="upload-label">
+        <span class="upload-icon">📄</span>
+        <span>Clique para anexar seu currículo em PDF</span>
+        <small>Ou arraste e solte aqui</small>
+      </label>
+      <input type="file" id="pdfInput" accept="application/pdf">
+    </div>
+    <div id="pdfStatus" class="pdf-status"></div>
+    <div id="pdfPreview" class="pdf-preview hidden">
+      <h3>Texto extraído (primeiros 2000 caracteres):</h3>
+      <pre id="pdfTextPreview"></pre>
+    </div>
+  </div>
+
+  <div id="actions" class="tab-content">
+    <div class="action-card">
+      <h3>Preencher formulário atual</h3>
+      <p>Detecta campos na página ativa e preenche com seus dados.</p>
+      <div class="mode-selector">
+        <label>
+          <input type="radio" name="fillMode" value="review" checked>
+          Revisar antes de preencher
+        </label>
+        <label>
+          <input type="radio" name="fillMode" value="auto">
+          Preencher automaticamente
+        </label>
+      </div>
+      <button id="btnFill" class="btn-primary btn-large">🚀 Preencher esta página</button>
+    </div>
+
+    <div class="action-card">
+      <h3>Status da página</h3>
+      <div id="pageStatus">
+        <span class="badge" id="platformBadge">Detectando...</span>
+        <span class="badge" id="fieldsBadge">0 campos</span>
+      </div>
+    </div>
+
+    <div class="logs">
+      <h4>Logs</h4>
+      <pre id="actionLogs"></pre>
+    </div>
+  </div>
+
+  <script src="../lib/pdf.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

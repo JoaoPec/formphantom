@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Dev Form Autofill",
+  "version": "1.0.0",
+  "description": "Preenche automaticamente formulários de contratação e vagas de dev com seu perfil e PDF de currículo.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "lib/pdf.min.js",
+        "content_scripts/fieldDetector.js",
+        "content_scripts/platformMappers.js",
+        "content_scripts/autofill.js",
+        "content_scripts/overlay.js"
+      ],
+      "css": ["styles/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["lib/pdf.worker.min.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
