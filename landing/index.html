@@ -3,428 +3,955 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FormPhantom — O Fantasma que Preenche Formulários</title>
+  <title>FormPhantom - Candidaturas preenchidas sem repetição</title>
   <style>
     :root {
-      --bg: #0a0c10;
-      --surface: #111318;
-      --surface-2: #1a1d24;
-      --border: #2a2e37;
-      --text: #e6edf3;
-      --text-secondary: #8b949e;
-      --primary: #58a6ff;
-      --primary-glow: rgba(88,166,255,0.3);
-      --accent: #a371f7;
-      --success: #3fb950;
+      --bg: #060910;
+      --bg-2: #0a0f1a;
+      --surface: #0d1320;
+      --surface-2: #121a2a;
+      --line: rgba(174, 143, 255, 0.2);
+      --line-strong: rgba(178, 143, 255, 0.42);
+      --text: #f4f0ff;
+      --muted: #b8b1c9;
+      --quiet: #817b94;
+      --violet: #9d65ff;
+      --violet-2: #6f3df4;
+      --cyan: #73e3ff;
+      --green: #6ee79d;
+      --shadow: 0 28px 90px rgba(25, 11, 70, 0.42);
+      --radius: 22px;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, rgba(111, 61, 244, 0.08), transparent 34rem),
+        radial-gradient(circle at 72% 13%, rgba(115, 227, 255, 0.11), transparent 22rem),
+        linear-gradient(135deg, var(--bg), var(--bg-2) 58%, #070812);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.5;
       overflow-x: hidden;
     }
 
-    /* --- Header --- */
-    header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      background: rgba(10,12,16,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+    a {
+      color: inherit;
+      text-decoration: none;
     }
 
-    nav {
-      max-width: 1100px;
+    .shell {
+      width: min(100% - 48px, 1180px);
       margin: 0 auto;
-      padding: 14px 24px;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 10px 0;
+      background: rgba(6, 9, 16, 0.76);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav {
+      min-height: 56px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: rgba(12, 17, 29, 0.74);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
     }
 
-    .logo {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text);
-      text-decoration: none;
-      display: flex;
+    .brand {
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 11px;
+      font-weight: 800;
+      font-size: 19px;
     }
 
-    .logo img {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .brand span span {
+      color: #b17dff;
     }
 
     .nav-links {
       display: flex;
-      gap: 28px;
-      list-style: none;
-    }
-
-    .nav-links a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .nav-links a:hover { color: var(--text); }
-
-    .btn {
-      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 8px;
+      gap: 34px;
+      list-style: none;
+      color: var(--muted);
       font-size: 14px;
       font-weight: 600;
-      text-decoration: none;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s;
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 0 20px var(--primary-glow);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 30px var(--primary-glow);
-    }
-
-    .btn-outline {
-      background: transparent;
+    .nav-links a:hover {
       color: var(--text);
-      border: 1px solid var(--border);
     }
 
-    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-
-    /* --- Hero --- */
-    .hero {
-      padding: 160px 24px 100px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -50%; left: 50%;
-      transform: translateX(-50%);
-      width: 800px; height: 800px;
-      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero h1 {
-      font-size: clamp(36px, 6vw, 64px);
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 0 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
       font-weight: 800;
-      line-height: 1.1;
-      margin-bottom: 20px;
-      position: relative;
+      line-height: 1;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
     }
 
-    .hero h1 span {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .button svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
     }
 
-    .hero p {
-      font-size: clamp(16px, 2.5vw, 20px);
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto 36px;
-      position: relative;
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(177, 125, 255, 0.72);
+    }
+
+    .button-primary {
+      border-color: rgba(170, 120, 255, 0.8);
+      background: linear-gradient(135deg, var(--violet), var(--violet-2));
+      box-shadow: 0 18px 44px rgba(116, 58, 255, 0.34);
+    }
+
+    .button-secondary {
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 0.82fr) minmax(520px, 1.18fr);
+      gap: 56px;
+      align-items: center;
+      padding: 52px 0 30px;
+    }
+
+    .hero-copy {
+      max-width: 520px;
+    }
+
+    h1 {
+      max-width: 560px;
+      font-size: clamp(46px, 7vw, 76px);
+      line-height: 0.95;
+      font-weight: 900;
+    }
+
+    .gradient-text {
+      display: inline-block;
+      color: #a876ff;
+      text-shadow: 0 0 34px rgba(157, 101, 255, 0.28);
+    }
+
+    .hero-copy p {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 19px);
+      max-width: 560px;
     }
 
     .hero-actions {
+      margin-top: 34px;
       display: flex;
-      gap: 16px;
-      justify-content: center;
       flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .hero-notes {
+      margin-top: 26px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 22px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .note {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .note svg {
+      width: 17px;
+      height: 17px;
+      color: var(--cyan);
+    }
+
+    .product-stage {
+      position: relative;
+      min-height: 470px;
+    }
+
+    .browser-frame {
+      position: relative;
+      overflow: hidden;
+      padding: 56px 36px 34px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 25%),
+        rgba(7, 11, 19, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .browser-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 38px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .traffic {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .traffic i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff826e;
+    }
+
+    .traffic i:nth-child(2) { background: #f7c869; }
+    .traffic i:nth-child(3) { background: #63d589; }
+
+    .url {
+      position: absolute;
+      top: 9px;
+      left: 98px;
+      right: 28px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(2, 5, 11, 0.58);
+      color: var(--quiet);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .form-title {
+      margin-bottom: 22px;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px 24px;
+    }
+
+    .field {
       position: relative;
     }
 
-    /* --- Features --- */
-    .section {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 100px 24px;
+    .field.wide {
+      grid-column: span 2;
     }
 
-    .section-title {
-      text-align: center;
-      margin-bottom: 60px;
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #f6f1ff;
+      font-size: 12px;
+      font-weight: 800;
     }
 
-    .section-title h2 {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 12px;
+    .field-box {
+      min-height: 48px;
+      padding: 13px 42px 12px 14px;
+      border: 1px solid rgba(157, 101, 255, 0.78);
+      border-radius: 8px;
+      background: rgba(20, 25, 41, 0.9);
+      color: #f7f3ff;
+      font-size: 13px;
+      box-shadow: 0 0 24px rgba(123, 74, 255, 0.18);
     }
 
-    .section-title p {
-      color: var(--text-secondary);
-      font-size: 16px;
+    .field-box.muted {
+      border-color: rgba(255, 255, 255, 0.12);
+      color: var(--muted);
+      box-shadow: none;
     }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+    .check {
+      position: absolute;
+      right: 12px;
+      bottom: 13px;
+      color: var(--green);
     }
 
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      transition: transform 0.2s, border-color 0.2s;
+    .check svg {
+      width: 17px;
+      height: 17px;
     }
 
-    .feature-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--primary);
+    .review-panel {
+      position: absolute;
+      top: 28px;
+      right: 0;
+      width: 265px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      background: rgba(13, 18, 30, 0.92);
+      box-shadow: 0 26px 64px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(18px);
+      transform: translateX(18px);
     }
 
-    .feature-icon {
-      width: 48px; height: 48px;
-      border-radius: 12px;
-      background: var(--surface-2);
+    .review-head {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      margin-bottom: 16px;
+      margin-bottom: 13px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
     }
 
-    .feature-card h3 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 8px;
+    .review-row {
+      display: grid;
+      grid-template-columns: 22px 1fr 14px;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
     }
 
-    .feature-card p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      line-height: 1.6;
+    .review-row:first-of-type {
+      border-top: 0;
     }
 
-    /* --- How it works --- */
-    .steps {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-      justify-content: center;
+    .review-row svg {
+      width: 18px;
+      height: 18px;
+      color: #c3a4ff;
     }
 
-    .step {
-      flex: 1 1 220px;
-      max-width: 280px;
+    .review-row strong {
+      display: block;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.15;
+    }
+
+    .review-row span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .review-button {
+      width: 100%;
+      margin-top: 12px;
+      min-height: 40px;
+      border: 0;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #a570ff, #743bf5);
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .ghost {
+      position: absolute;
+      right: 195px;
+      bottom: 0;
+      width: 148px;
+      filter: drop-shadow(0 22px 34px rgba(112, 65, 255, 0.5));
+      animation: float 5.6s ease-in-out infinite;
+    }
+
+    .trail {
+      position: absolute;
+      left: -10px;
+      width: 180px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(157, 101, 255, 0.78), rgba(115, 227, 255, 0.2));
+      transform-origin: right center;
+      filter: drop-shadow(0 0 10px rgba(157, 101, 255, 0.8));
+    }
+
+    .trail.one { top: 164px; transform: rotate(-13deg); }
+    .trail.two { top: 236px; transform: rotate(7deg); }
+    .trail.three { top: 309px; transform: rotate(18deg); }
+
+    .feature-rail {
+      margin-top: 18px;
+      padding: 20px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      background: rgba(14, 19, 31, 0.64);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+    }
+
+    .rail-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .rail-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -13px;
+      width: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--line-strong), transparent);
+    }
+
+    .icon-box {
+      width: 52px;
+      height: 52px;
+      border: 1px solid rgba(157, 101, 255, 0.68);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #b996ff;
+      background: rgba(126, 78, 255, 0.08);
+    }
+
+    .icon-box svg {
+      width: 27px;
+      height: 27px;
+    }
+
+    .rail-item h3,
+    .flow-step h3 {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .rail-item p,
+    .flow-step p,
+    .install-list li,
+    footer {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .split-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      padding: 66px 0 48px;
+    }
+
+    .section-heading {
+      margin-bottom: 28px;
+      font-size: clamp(25px, 3vw, 34px);
+      line-height: 1.1;
+    }
+
+    .flow {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 28px;
+    }
+
+    .flow::before {
+      content: "";
+      position: absolute;
+      top: 29px;
+      left: 58px;
+      right: 58px;
+      border-top: 1px dashed rgba(157, 101, 255, 0.6);
+    }
+
+    .flow-step {
+      position: relative;
       text-align: center;
-      padding: 24px;
     }
 
     .step-number {
-      width: 48px; height: 48px;
+      width: 38px;
+      height: 38px;
+      margin: 0 auto 16px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: #fff;
-      font-weight: 700;
-      font-size: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #b17dff, #703cf1);
+      box-shadow: 0 10px 26px rgba(112, 60, 241, 0.38);
+      font-weight: 900;
+    }
+
+    .flow-icon {
+      width: 92px;
+      height: 60px;
+      margin: 0 auto 14px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #b996ff;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .flow-icon svg {
+      width: 34px;
+      height: 34px;
+    }
+
+    .install-panel {
+      padding-left: 36px;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .terminal {
+      overflow: hidden;
+      margin-bottom: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 12px;
+      background: rgba(5, 8, 14, 0.74);
+    }
+
+    .terminal-bar {
+      height: 30px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
+      gap: 7px;
+      padding: 0 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .step h3 { font-size: 16px; margin-bottom: 6px; }
-    .step p { color: var(--text-secondary); font-size: 14px; }
-
-    /* --- Install --- */
-    .install-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 40px;
-      text-align: center;
+    .terminal-bar i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff826e;
     }
 
-    .install-box h2 { margin-bottom: 24px; }
+    .terminal-bar i:nth-child(2) { background: #f7c869; }
+    .terminal-bar i:nth-child(3) { background: #63d589; }
 
-    .code-block {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px 20px;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    .terminal code {
+      display: block;
+      padding: 17px 18px 18px;
+      color: #f5f0ff;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 13px;
-      color: var(--text-secondary);
-      text-align: left;
-      overflow-x: auto;
-      margin: 16px 0;
-      position: relative;
+      line-height: 1.75;
+      white-space: pre-wrap;
     }
 
-    .code-block code { color: var(--text); }
+    .prompt {
+      color: #71e7a1;
+    }
 
-    /* --- Footer --- */
+    .install-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px 18px;
+      list-style: none;
+      counter-reset: install;
+    }
+
+    .install-list li {
+      counter-increment: install;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .install-list li::before {
+      content: counter(install);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #8f58ff;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .inline-code {
+      padding: 2px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+
     footer {
-      border-top: 1px solid var(--border);
-      padding: 40px 24px;
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 13px;
+      margin: 34px auto 28px;
+      padding: 20px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: rgba(255, 255, 255, 0.025);
     }
 
-    footer a { color: var(--primary); text-decoration: none; }
-
-    /* --- Responsive --- */
-    @media (max-width: 640px) {
-      .nav-links { display: none; }
-      .hero { padding: 120px 20px 60px; }
-      .section { padding: 60px 20px; }
+    .footer-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
     }
 
-    /* --- Animations --- */
+    .footer-brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+    }
+
+    .footer-brand .brand-word span {
+      color: #b17dff;
+    }
+
+    footer a {
+      color: #b996ff;
+      font-weight: 700;
+    }
+
     @keyframes float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+      50% { transform: translateY(-10px); }
     }
 
-    .float { animation: float 4s ease-in-out infinite; }
+    @media (max-width: 980px) {
+      .hero,
+      .split-section {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 56px;
+      }
+
+      .product-stage {
+        min-height: 420px;
+      }
+
+      .review-panel {
+        right: 16px;
+        transform: none;
+      }
+
+      .feature-rail,
+      .install-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .install-panel {
+        padding-left: 0;
+        border-left: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100% - 32px, 1180px);
+      }
+
+      .nav {
+        gap: 12px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .nav .button {
+        min-height: 40px;
+        padding: 0 12px;
+      }
+
+      h1 {
+        font-size: clamp(40px, 13vw, 58px);
+      }
+
+      .hero-actions .button {
+        width: 100%;
+      }
+
+      .product-stage {
+        min-height: 0;
+      }
+
+      .browser-frame {
+        padding: 52px 16px 120px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.wide {
+        grid-column: auto;
+      }
+
+      .review-panel {
+        position: relative;
+        width: auto;
+        right: auto;
+        top: auto;
+        margin-top: 16px;
+      }
+
+      .ghost {
+        width: 96px;
+        right: 18px;
+        bottom: 14px;
+      }
+
+      .trail {
+        display: none;
+      }
+
+      .feature-rail,
+      .flow,
+      .install-list {
+        grid-template-columns: 1fr;
+      }
+
+      .rail-item:not(:last-child)::after,
+      .flow::before {
+        display: none;
+      }
+
+      .split-section {
+        padding-top: 44px;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 <body>
-
-  <header>
-    <nav>
-      <a href="#" class="logo"><img src="logo.png" alt="FormPhantom"><span>FormPhantom</span></a>
+  <header class="site-header">
+    <nav class="nav shell" aria-label="Navegação principal">
+      <a class="brand" href="#">
+        <img src="logo.png" alt="FormPhantom">
+        <span>Form<span>Phantom</span></span>
+      </a>
       <ul class="nav-links">
         <li><a href="#features">Funcionalidades</a></li>
-        <li><a href="#como-funciona">Como funciona</a></li>
+        <li><a href="#fluxo">Fluxo</a></li>
         <li><a href="#instalar">Instalar</a></li>
       </ul>
-      <a href="https://github.com/JoaoPec/formphantom" class="btn btn-outline" target="_blank">GitHub</a>
+      <a class="button button-secondary" href="https://github.com/JoaoPec/formphantom" target="_blank" rel="noreferrer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.18-3.37-1.18a2.65 2.65 0 0 0-1.11-1.46c-.91-.62.07-.61.07-.61a2.1 2.1 0 0 1 1.53 1.03 2.13 2.13 0 0 0 2.91.83 2.14 2.14 0 0 1 .63-1.34c-2.22-.25-4.56-1.11-4.56-4.94a3.87 3.87 0 0 1 1.03-2.68 3.6 3.6 0 0 1 .1-2.64s.84-.27 2.75 1.02A9.48 9.48 0 0 1 12 6c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64a3.86 3.86 0 0 1 1.03 2.68c0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+        GitHub
+      </a>
     </nav>
   </header>
 
-  <section class="hero">
-    <img src="logo.png" alt="FormPhantom" class="hero-logo float" style="width: 200px; height: 200px; margin-bottom: 24px; filter: drop-shadow(0 0 40px var(--primary-glow));">
-    <h1>O Fantasma que Preenche <br><span>Formulários de Vagas</span></h1>
-    <p>Cansado de precher o mesmo formulário de candidatura pela milésima vez? O FormPhantom detecta, mapeia e preenche tudo sozinho. Você só revisa e confirma.</p>
-    <div class="hero-actions">
-      <a href="#instalar" class="btn btn-primary">🚀 Instalar no Chrome</a>
-      <a href="https://github.com/JoaoPec/formphantom" class="btn btn-outline" target="_blank">⭐ Ver no GitHub</a>
-    </div>
-  </section>
-
-  <section class="section" id="features">
-    <div class="section-title">
-      <h2>Por que usar o FormPhantom?</h2>
-      <p>Feito por devs, para devs. Funciona nas principais plataformas de RH do Brasil e do mundo.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>Perfil Único</h3>
-        <p>Cadastre seus dados uma vez e reutilize em qualquer formulário. Nome, contato, endereço, pretensão salarial, disponibilidade e mais.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📄</div>
-        <h3>Leitura de PDF</h3>
-        <p>Anexe seu currículo em PDF e a extensão extrai o texto automaticamente para preencher campos de resumo, experiência e formação.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3>Matching Inteligente</h3>
-        <p>Algoritmo de scoring com normalização de texto detecta o campo certo mesmo em sites desconhecidos. Funciona em português e inglês.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>Plataformas Suportadas</h3>
-        <p>Mapeamento otimizado para LinkedIn, Gupy, Greenhouse, Lever, Workable, Indeed, Vagas.com, Catho, InfoJobs, Kenoby e formulários genéricos.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">👁️</div>
-        <h3>Modo Revisar</h3>
-        <p>Veja todos os campos detectados em um overlay flutuante, edite valores, desmarque o que não quiser e confirme antes de preencher.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🤖</div>
-        <h3>Modo Automático</h3>
-        <p>Confiante? Ative o modo automático e o FormPhantom preenche tudo sozinho em segundos, sem perguntar nada.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="como-funciona">
-    <div class="section-title">
-      <h2>Como funciona</h2>
-      <p>Três passos e pronto. Nada de configuração complexa.</p>
-    </div>
-    <div class="steps">
-      <div class="step">
-        <div class="step-number">1</div>
-        <h3>Cadastre seu perfil</h3>
-        <p>Abra a extensão, preencha seus dados pessoais e profissionais e salve. Anexe seu PDF de currículo se quiser.</p>
-      </div>
-      <div class="step">
-        <div class="step-number">2</div>
-        <h3>Abra uma vaga</h3>
-        <p>Vá para qualquer site de candidatura. O FormPhantom detecta automaticamente a plataforma e os campos do formulário.</p>
-      </div>
-      <div class="step">
-        <div class="step-number">3</div>
-        <h3>Clique e pronto</h3>
-        <p>Aperte "Preencher esta página". Revisou? Confirmou? O fantasma faz o resto enquanto você toma um café.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="instalar">
-    <div class="install-box">
-      <h2>Instalar no Chrome</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 20px;">A extensão ainda não está na Chrome Web Store, mas você pode usar em modo desenvolvedor:</p>
-
-      <div class="code-block">
-        git clone https://github.com/JoaoPec/formphantom.git
+  <main>
+    <section class="hero shell">
+      <div class="hero-copy">
+        <h1>Candidaturas preenchidas <span class="gradient-text">sem repetir a mesma história</span></h1>
+        <p>O FormPhantom detecta campos, cruza com seu perfil e deixa tudo pronto para você revisar antes de enviar.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#instalar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 0 0-8.7 11.3l-1.16 4.25a1.08 1.08 0 0 0 1.32 1.32l4.25-1.15A9 9 0 1 0 12 3Zm-.75 4.5a.75.75 0 0 1 1.5 0v5.19l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V7.5Z"/></svg>
+            Instalar no Chrome
+          </a>
+          <a class="button button-secondary" href="https://github.com/JoaoPec/formphantom" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.18-3.37-1.18a2.65 2.65 0 0 0-1.11-1.46c-.91-.62.07-.61.07-.61a2.1 2.1 0 0 1 1.53 1.03 2.13 2.13 0 0 0 2.91.83 2.14 2.14 0 0 1 .63-1.34c-2.22-.25-4.56-1.11-4.56-4.94a3.87 3.87 0 0 1 1.03-2.68 3.6 3.6 0 0 1 .1-2.64s.84-.27 2.75 1.02A9.48 9.48 0 0 1 12 6c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64a3.86 3.86 0 0 1 1.03 2.68c0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+            Ver no GitHub
+          </a>
+        </div>
+        <div class="hero-notes" aria-label="Destaques">
+          <span class="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M3 12h18M12 3a15.5 15.5 0 0 1 0 18M12 3a15.5 15.5 0 0 0 0 18M4.6 7h14.8M4.6 17h14.8"/></svg>Funciona em vários sites</span>
+          <span class="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M7 11V8a5 5 0 0 1 10 0v3m-11 0h12v9H6z"/></svg>Privado e local</span>
+          <span class="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m8 9-4 3 4 3m8-6 4 3-4 3m-2-9-4 12"/></svg>Código aberto</span>
+        </div>
       </div>
 
-      <ol style="text-align: left; color: var(--text-secondary); font-size: 14px; max-width: 480px; margin: 0 auto 24px; line-height: 2;">
-        <li>Abra o Chrome e vá para <code style="background: var(--surface-2); padding: 2px 6px; border-radius: 4px; color: var(--text);">chrome://extensions/</code></li>
-        <li>Ative o <strong>Modo do desenvolvedor</strong> (canto superior direito)</li>
-        <li>Clique em <strong>Carregar sem compactação</strong></li>
-        <li>Selecione a pasta <code style="background: var(--surface-2); padding: 2px 6px; border-radius: 4px; color: var(--text);">formphantom</code></li>
-        <li>O ícone do fantasma aparecerá na barra de ferramentas 👻</li>
-      </ol>
+      <div class="product-stage" aria-label="Prévia do preenchimento">
+        <span class="trail one"></span>
+        <span class="trail two"></span>
+        <span class="trail three"></span>
+        <div class="browser-frame">
+          <div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="url">empresa.com/carreiras/vaga-desenvolvedor</div>
+          <h2 class="form-title">Vaga: Desenvolvedor(a) Full Stack</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label>Nome completo</label>
+              <div class="field-box">João Victor Santos</div>
+              <span class="check"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" d="m5 12 4 4L19 6"/></svg></span>
+            </div>
+            <div class="field">
+              <label>Resumo profissional</label>
+              <div class="field-box muted">Desenvolvedor Full Stack com experiência em aplicações web...</div>
+            </div>
+            <div class="field">
+              <label>E-mail</label>
+              <div class="field-box">joao.santos@email.com</div>
+              <span class="check"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" d="m5 12 4 4L19 6"/></svg></span>
+            </div>
+            <div class="field">
+              <label>Experiência</label>
+              <div class="field-box">6 anos de experiência em desenvolvimento de aplicações web escaláveis.</div>
+            </div>
+            <div class="field">
+              <label>Telefone</label>
+              <div class="field-box">(11) 98765-4321</div>
+              <span class="check"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" d="m5 12 4 4L19 6"/></svg></span>
+            </div>
+            <div class="field">
+              <label>Formação</label>
+              <div class="field-box muted">Bacharelado em Ciência da Computação</div>
+            </div>
+          </div>
+        </div>
 
-      <a href="https://github.com/JoaoPec/formphantom" class="btn btn-primary" target="_blank">📥 Baixar do GitHub</a>
-    </div>
-  </section>
+        <aside class="review-panel">
+          <div class="review-head">
+            <span>Revisar preenchimento</span>
+            <span aria-hidden="true">×</span>
+          </div>
+          <div class="review-row">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg>
+            <div><strong>Nome completo</strong><span>João Victor Santos</span></div>
+            <span class="check"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" d="m5 12 4 4L19 6"/></svg></span>
+          </div>
+          <div class="review-row">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+            <div><strong>E-mail</strong><span>joao.santos@email.com</span></div>
+            <span class="check"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" d="m5 12 4 4L19 6"/></svg></span>
+          </div>
+          <div class="review-row">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>
+            <div><strong>Experiência</strong><span>Ver texto</span></div>
+            <span>›</span>
+          </div>
+          <button class="review-button">Preencher esta página</button>
+        </aside>
+        <img class="ghost" src="logo.png" alt="" aria-hidden="true">
+      </div>
+    </section>
 
-  <footer>
-    <p>Feito com ☕ e 💻 por <a href="https://github.com/JoaoPec" target="_blank">João</a> · Código aberto sob licença MIT</p>
-    <p style="margin-top: 8px;"><a href="https://github.com/JoaoPec/formphantom" target="_blank">github.com/JoaoPec/formphantom</a></p>
+    <section class="feature-rail shell" id="features" aria-label="Funcionalidades">
+      <article class="rail-item">
+        <div class="icon-box"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg></div>
+        <div><h3>Perfil único</h3><p>Cadastre seus dados uma vez e reutilize em qualquer vaga.</p></div>
+      </article>
+      <article class="rail-item">
+        <div class="icon-box"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M7 3h7l3 3v15H7zM14 3v4h4M9 14h6M9 17h4"/></svg></div>
+        <div><h3>Leitura de PDF</h3><p>Extrai texto do currículo e organiza o contexto.</p></div>
+      </article>
+      <article class="rail-item">
+        <div class="icon-box"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 2v4m0 12v4M2 12h4m12 0h4M6.3 6.3l2.8 2.8m5.8 5.8 2.8 2.8m0-11.4-2.8 2.8m-5.8 5.8-2.8 2.8M8 12a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"/></svg></div>
+        <div><h3>Matching inteligente</h3><p>Encontra o campo certo mesmo em sites novos.</p></div>
+      </article>
+      <article class="rail-item">
+        <div class="icon-box"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M6 4h12v16H6zM9 8h1m3 0h3M9 12h1m3 0h3M9 16h1m3 0h3"/></svg></div>
+        <div><h3>Modo revisar</h3><p>Veja, edite e confirme cada campo antes de preencher.</p></div>
+      </article>
+    </section>
+
+    <section class="split-section shell">
+      <div id="fluxo">
+        <h2 class="section-heading">Fluxo em 3 passos</h2>
+        <div class="flow">
+          <article class="flow-step">
+            <div class="step-number">1</div>
+            <div class="flow-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg></div>
+            <h3>Salve seu perfil</h3>
+            <p>Preencha seus dados e anexe seu currículo em PDF.</p>
+          </article>
+          <article class="flow-step">
+            <div class="step-number">2</div>
+            <div class="flow-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></div>
+            <h3>Abra a vaga</h3>
+            <p>O FormPhantom detecta os campos automaticamente.</p>
+          </article>
+          <article class="flow-step">
+            <div class="step-number">3</div>
+            <div class="flow-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" d="m5 12 4 4L19 6M5 19h14"/></svg></div>
+            <h3>Revise e preencha</h3>
+            <p>Revise, ajuste o que quiser e deixe o fantasma trabalhar.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="install-panel" id="instalar">
+        <h2 class="section-heading">Instalar no Chrome (modo desenvolvedor)</h2>
+        <div class="terminal" aria-label="Comando de instalação">
+          <div class="terminal-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <code><span class="prompt">$</span> git clone https://github.com/JoaoPec/formphantom.git
+<span class="prompt">$</span> cd formphantom</code>
+        </div>
+        <ol class="install-list">
+          <li>Abra o Chrome e vá para <span class="inline-code">chrome://extensions/</span></li>
+          <li>Ative o Modo do desenvolvedor.</li>
+          <li>Clique em Carregar sem compactação.</li>
+          <li>Selecione a pasta <span class="inline-code">formphantom</span>.</li>
+          <li>O ícone do FormPhantom aparecerá na barra de ferramentas.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="shell">
+    <span class="footer-brand"><img src="logo.png" alt=""><span class="brand-word">Form<span>Phantom</span></span></span>
+    <span>Feito com cuidado e código por <a href="https://github.com/JoaoPec" target="_blank" rel="noreferrer">João</a> · Código aberto sob licença MIT</span>
+    <a href="https://github.com/JoaoPec/formphantom" target="_blank" rel="noreferrer">github.com/JoaoPec/formphantom</a>
   </footer>
-
 </body>
 </html>
