@@ -34,6 +34,33 @@
     education: ['formacao','formação','education','academico','graduacao'],
   };
 
+  const KEY_PRIORITY = [
+    'fullName',
+    'email',
+    'phone',
+    'postalCode',
+    'city',
+    'state',
+    'country',
+    'linkedin',
+    'github',
+    'portfolio',
+    'salaryExpectation',
+    'experienceYears',
+    'currentRole',
+    'currentCompany',
+    'summary',
+    'coverLetter',
+    'skills',
+    'education',
+    'firstName',
+    'lastName',
+  ];
+
+  const REPEATABLE_KEYS = {
+    phone: 2,
+  };
+
   function normalize(str) {
     if (!str) return '';
     return str.toLowerCase()
@@ -43,6 +70,10 @@
   }
 
   function scoreField(field, key) {
+    const labelNorm = normalize(field.label);
+    if (key === 'fullName' && /\b(primeiro nome|first name|sobrenome|last name)\b/.test(labelNorm)) return 0;
+    if ((key === 'firstName' || key === 'lastName') && /\b(nome completo|full name)\b/.test(labelNorm)) return 0;
+
     const texts = [
       { text: field.label, weight: 10 },
       { text: field.name, weight: 8 },
@@ -70,21 +101,32 @@
     return total;
   }
 
+  function sortProfileKeys(profileKeys) {
+    return [...profileKeys].sort((a, b) => {
+      const priorityA = KEY_PRIORITY.includes(a) ? KEY_PRIORITY.indexOf(a) : 999;
+      const priorityB = KEY_PRIORITY.includes(b) ? KEY_PRIORITY.indexOf(b) : 999;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      return a.localeCompare(b);
+    });
+  }
+
   function matchGenericFields(fields, profileKeys) {
     const matches = [];
     const usedFields = new Set();
-    const sortedKeys = [...profileKeys].sort((a, b) => b.length - a.length);
+    const sortedKeys = sortProfileKeys(profileKeys);
     for (const key of sortedKeys) {
-      let best = null, bestScore = 0;
+      const bestMatches = [];
       for (const field of fields) {
         if (usedFields.has(field)) continue;
-        if (field.type === 'radio') continue;
+        if (field.type === 'radio' || field.type === 'file') continue;
         const s = scoreField(field, key);
-        if (s > bestScore) { bestScore = s; best = field; }
+        if (s >= 6) bestMatches.push({ field, key, score: s, source: 'generic' });
       }
-      if (best && bestScore >= 6) {
-        matches.push({ field: best, key, score: bestScore, source: 'generic' });
-        usedFields.add(best);
+      bestMatches.sort((a, b) => b.score - a.score);
+      const maxMatches = REPEATABLE_KEYS[key] || 1;
+      for (const match of bestMatches.slice(0, maxMatches)) {
+        matches.push(match);
+        usedFields.add(match.field);
       }
     }
     return matches;
@@ -143,6 +185,59 @@
     return null;
   }
 
+  function fieldText(field) {
+    if (!field) return '';
+    return [
+      field.label,
+      field.name,
+      field.placeholder,
+      field.id,
+      field.ariaLabel,
+      field.element?.getAttribute?.('aria-describedby') || '',
+      field.element?.closest?.('div')?.innerText || ''
+    ].filter(Boolean).join(' ');
+  }
+
+  function formatValueForField(field, key, value) {
+    const raw = String(value);
+    const text = normalize(fieldText(field));
+    const wantsDigits = [
+      'apenas numeros',
+      'format integer',
+      'format r',
+      'cep',
+      'whatsapp',
+      'telefone',
+      'celular',
+      'ddd',
+      'pretensao',
+      'salario'
+    ].some(term => text.includes(term));
+
+    if (!wantsDigits && field?.type !== 'number') return raw;
+
+    if (key === 'salaryExpectation') {
+      const currency = raw.replace(/[^\d,.-]/g, '').replace(/\./g, '');
+      const decimalCurrency = currency.match(/^(\d+),\d{2}$/);
+      if (decimalCurrency) return decimalCurrency[1];
+    }
+
+    let digits = raw.replace(/\D/g, '');
+    if (key === 'phone' && digits.startsWith('55') && digits.length > 11) {
+      digits = digits.slice(2);
+    }
+    return digits || raw;
+  }
+
+  function setNativeValue(el, value) {
+    const prototype = el.tagName.toLowerCase() === 'textarea'
+      ? window.HTMLTextAreaElement.prototype
+      : window.HTMLInputElement.prototype;
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+    if (descriptor?.set) descriptor.set.call(el, value);
+    else el.value = value;
+  }
+
   function setFieldValue(field, value) {
     if (value === undefined || value === null || value === '') return false;
     const el = field.element || field;
@@ -170,7 +265,8 @@
       }
       if (type === 'file') return false;
       el.focus();
-      el.value = value;
+      if (tag === 'input' || tag === 'textarea') setNativeValue(el, value);
+      else el.value = value;
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.dispatchEvent(new Event('change', { bubbles: true }));
       el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'a' }));
@@ -189,7 +285,8 @@
     if (platformMappings) {
       for (const { element, key } of platformMappings.mappings) {
         if (profile[key] !== undefined && profile[key] !== '') {
-          plan.push({ element, key, value: profile[key], source: 'platform' });
+          const field = window.__DFA_FieldDetector.getFieldMetadata(element);
+          plan.push({ element, key, value: formatValueForField(field, key, profile[key]), source: 'platform' });
         }
       }
     }
@@ -199,7 +296,7 @@
     const usedElements = new Set(plan.map(p => p.element));
     for (const m of genericMatches) {
       if (!usedElements.has(m.field.element)) {
-        plan.push({ element: m.field.element, key: m.key, value: profile[m.key], source: m.source });
+        plan.push({ element: m.field.element, key: m.key, value: formatValueForField(m.field, m.key, profile[m.key]), source: m.source });
         usedElements.add(m.field.element);
       }
     }

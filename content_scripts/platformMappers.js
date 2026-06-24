@@ -128,6 +128,12 @@
         'input#txtTelefone': 'phone',
       }
     },
+    airtable: {
+      host: /airtable\.com/,
+      selectors: {
+        'textarea, input[type="text"], input[type="email"], input[type="tel"], input[type="number"]': null,
+      }
+    },
     kenoby: {
       host: /kenoby\.com/,
       selectors: {
@@ -154,6 +160,7 @@
     if (!platform) return null;
     const map = [];
     for (const [selector, key] of Object.entries(platform.selectors)) {
+      if (!key) continue;
       const els = document.querySelectorAll(selector);
       els.forEach(el => {
         map.push({ element: el, key, selector });

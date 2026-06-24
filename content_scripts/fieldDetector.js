@@ -3,11 +3,52 @@
 (() => {
   const FIELD_SELECTOR = 'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea, select';
 
+  function cleanText(text) {
+    return (text || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function textWithoutControls(el) {
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll('input, textarea, select, button, [contenteditable="true"]').forEach(n => n.remove());
+    return cleanText(clone.innerText || clone.textContent || '');
+  }
+
+  function extractQuestionLabel(text) {
+    const cleaned = cleanText(text);
+    if (!cleaned) return '';
+
+    const beforeRequiredMark = cleaned.split('*')[0].trim();
+    if (beforeRequiredMark && beforeRequiredMark.length <= 180) return beforeRequiredMark;
+
+    const questionIndex = cleaned.indexOf('?');
+    if (questionIndex >= 0 && questionIndex < 180) return cleaned.slice(0, questionIndex + 1).trim();
+
+    const withoutFormatHints = cleaned
+      .replace(/\bFormat:\s*\S+.*/i, '')
+      .replace(/\bapenas numeros\b.*/i, '')
+      .replace(/\bdigite\b.*/i, '')
+      .trim();
+    if (withoutFormatHints && withoutFormatHints.length <= 120) return withoutFormatHints;
+
+    return cleaned.length <= 80 ? cleaned : '';
+  }
+
+  function getContextualLabelText(el) {
+    let node = el.parentElement;
+    for (let depth = 0; node && depth < 9; depth++, node = node.parentElement) {
+      const text = textWithoutControls(node);
+      if (!text || text.length > 600) continue;
+      const candidate = extractQuestionLabel(text);
+      if (candidate) return candidate;
+    }
+    return '';
+  }
+
   function getLabelText(el) {
     // 1. label[for=id]
     if (el.id) {
       const label = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (label) return label.innerText.trim();
+      if (label) return cleanText(label.innerText);
     }
     // 2. parent label
     const parentLabel = el.closest('label');
@@ -15,16 +56,17 @@
       // remove o próprio elemento do texto para evitar duplicação
       const clone = parentLabel.cloneNode(true);
       clone.querySelectorAll('input, textarea, select').forEach(n => n.remove());
-      return clone.innerText.trim();
+      return cleanText(clone.innerText);
     }
     // 3. aria-labelledby
     if (el.getAttribute('aria-labelledby')) {
       const ids = el.getAttribute('aria-labelledby').split(/\s+/);
-      return ids.map(id => document.getElementById(id)?.innerText.trim()).filter(Boolean).join(' ');
+      return ids.map(id => cleanText(document.getElementById(id)?.innerText)).filter(Boolean).join(' ');
     }
     // 4. aria-label
-    if (el.getAttribute('aria-label')) return el.getAttribute('aria-label').trim();
-    return '';
+    if (el.getAttribute('aria-label')) return cleanText(el.getAttribute('aria-label'));
+    // 5. visual form block text (Airtable and similar no-label builders)
+    return getContextualLabelText(el);
   }
 
   function getXPath(el) {
