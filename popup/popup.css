@@ -158,6 +158,23 @@ legend {
 
 .btn-primary:hover { background: var(--primary-hover); }
 
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary-hover);
+}
+
 .btn-large {
   width: 100%;
   padding: 12px;
@@ -168,6 +185,26 @@ legend {
 .status-msg {
   font-size: 12px;
   color: var(--success);
+}
+
+.notice {
+  margin-bottom: 12px;
+  background: rgba(88, 166, 255, 0.08);
+  border: 1px solid rgba(88, 166, 255, 0.32);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.notice strong {
+  color: var(--primary-hover);
+}
+
+.notice.warning {
+  background: rgba(210, 153, 34, 0.08);
+  border-color: rgba(210, 153, 34, 0.35);
 }
 
 .upload-area {
@@ -221,6 +258,13 @@ legend {
   color: var(--text-secondary);
   max-height: 180px;
   overflow-y: auto;
+}
+
+.pdf-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .hidden { display: none !important; }

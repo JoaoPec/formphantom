@@ -21,6 +21,7 @@
   </div>
 
   <div id="profile" class="tab-content active">
+    <div id="profileImportNotice" class="notice hidden"></div>
     <form id="profileForm">
       <fieldset>
         <legend>Dados Pessoais</legend>
@@ -192,9 +193,14 @@
       <input type="file" id="pdfInput" accept="application/pdf">
     </div>
     <div id="pdfStatus" class="pdf-status"></div>
+    <div id="pdfImportSummary" class="notice hidden"></div>
     <div id="pdfPreview" class="pdf-preview hidden">
       <h3>Texto extraído (primeiros 2000 caracteres):</h3>
       <pre id="pdfTextPreview"></pre>
+      <div class="pdf-actions">
+        <button id="btnImportPdfProfile" type="button" class="btn-secondary">Preencher campos vazios do perfil</button>
+        <button id="btnReviewProfile" type="button" class="btn-primary">Revisar perfil</button>
+      </div>
     </div>
   </div>
 
