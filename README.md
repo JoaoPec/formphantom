@@ -1,3 +1,5 @@
+<p align="center"><img src="landing/logo.png" width="120" alt="FormPhantom"></p>
+
 # FormPhantom
 
 Extensão de Chrome para preencher automaticamente formulários extensos de candidatura a vagas.

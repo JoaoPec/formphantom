@@ -59,7 +59,11 @@
       gap: 8px;
     }
 
-    .logo span { color: var(--primary); }
+    .logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
 
     .nav-links {
       display: flex;
@@ -313,7 +317,7 @@
 
   <header>
     <nav>
-      <a href="#" class="logo">👻 <span>FormPhantom</span></a>
+      <a href="#" class="logo"><img src="logo.png" alt="FormPhantom"><span>FormPhantom</span></a>
       <ul class="nav-links">
         <li><a href="#features">Funcionalidades</a></li>
         <li><a href="#como-funciona">Como funciona</a></li>
@@ -324,6 +328,7 @@
   </header>
 
   <section class="hero">
+    <img src="logo.png" alt="FormPhantom" class="hero-logo float" style="width: 200px; height: 200px; margin-bottom: 24px; filter: drop-shadow(0 0 40px var(--primary-glow));">
     <h1>O Fantasma que Preenche <br><span>Formulários de Vagas</span></h1>
     <p>Cansado de precher o mesmo formulário de candidatura pela milésima vez? O FormPhantom detecta, mapeia e preenche tudo sozinho. Você só revisa e confirma.</p>
     <div class="hero-actions">
