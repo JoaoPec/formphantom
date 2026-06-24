@@ -13,25 +13,25 @@
     cpf: ['cpf','cadastro de pessoa fisica'],
     linkedin: ['linkedin','linked in'],
     github: ['github','git hub'],
-    portfolio: ['portfolio','portfólio','site','website','personal website'],
-    salaryExpectation: ['pretensao','pretensão','salario','salário','remuneracao','expectativa salarial','salary expectation','faixa salarial'],
+    portfolio: ['portfolio','portfÃ³lio','site','website','personal website'],
+    salaryExpectation: ['pretensao','pretensÃ£o','salario','salÃ¡rio','remuneracao','expectativa salarial','salary expectation','faixa salarial'],
     city: ['cidade','city'],
     state: ['estado','state','uf','provincia'],
-    country: ['pais','país','country','nacionalidade'],
+    country: ['pais','paÃ­s','country','nacionalidade'],
     postalCode: ['cep','codigo postal','postal code','zip'],
     currentRole: ['cargo atual','current role','current title','job title','titulo'],
     currentCompany: ['empresa atual','current company','company','empresa'],
     experienceYears: ['anos de experiencia','anos experiencia','years of experience','tempo de experiencia'],
     availability: ['disponibilidade','availability','quando pode iniciar','start date','inicio'],
-    gender: ['genero','gênero','gender','sexo'],
-    ethnicity: ['raca','raça','etnia','ethnicity','cor'],
-    disability: ['deficiencia','deficiência','pcd','disability'],
-    summary: ['sobre voce','sobre você','resumo','summary','about you','tell us about','apresentacao','why you','motivo','descreva'],
+    gender: ['genero','gÃªnero','gender','sexo'],
+    ethnicity: ['raca','raÃ§a','etnia','ethnicity','cor'],
+    disability: ['deficiencia','deficiÃªncia','pcd','disability'],
+    summary: ['sobre voce','sobre vocÃª','resumo','summary','about you','tell us about','apresentacao','why you','motivo','descreva'],
     coverLetter: ['carta','cover letter','carta apresentacao','mensagem','message'],
-    address: ['endereco','endereço','address','rua','street','logradouro','avenida'],
-    resumeText: ['curriculo','currículo','resume','cv'],
+    address: ['endereco','endereÃ§o','address','rua','street','logradouro','avenida'],
+    resumeText: ['curriculo','currÃ­culo','resume','cv'],
     skills: ['habilidades','skills','competencias','tecnologias','stack'],
-    education: ['formacao','formação','education','academico','graduacao'],
+    education: ['formacao','formaÃ§Ã£o','education','academico','graduacao'],
   };
 
   function normalize(str) {
@@ -134,11 +134,11 @@
     }
     const valLower = value.toLowerCase().trim();
     const isYes = ['sim','yes','true','1'].includes(valLower);
-    const isNo = ['nao','não','no','false','0'].includes(valLower);
+    const isNo = ['nao','nÃ£o','no','false','0'].includes(valLower);
     for (const f of fields) {
       const label = normalize(f.label || f.element.value || '');
       if (isYes && (label.includes('sim') || label.includes('yes'))) return f.element;
-      if (isNo && (label.includes('nao') || label.includes('não') || label.includes('no'))) return f.element;
+      if (isNo && (label.includes('nao') || label.includes('nÃ£o') || label.includes('no'))) return f.element;
     }
     return null;
   }

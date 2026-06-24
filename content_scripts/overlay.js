@@ -74,7 +74,7 @@
       <div class="dfa-body"></div>
       <div class="dfa-footer">
         <button class="dfa-btn dfa-btn-danger" id="dfa-cancel">Cancelar</button>
-        <button class="dfa-btn dfa-btn-secondary" id="dfa-toggle">Inverter seleção</button>
+        <button class="dfa-btn dfa-btn-secondary" id="dfa-toggle">Inverter seleÃ§Ã£o</button>
         <button class="dfa-btn dfa-btn-primary" id="dfa-confirm">Confirmar</button>
       </div>
     `;
