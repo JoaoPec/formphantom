@@ -1,4 +1,4 @@
-# JobPhantom
+# FormPhantom
 
 Extensão de Chrome para preencher automaticamente formulários extensos de candidatura a vagas.
 
@@ -16,7 +16,7 @@ Extensão de Chrome para preencher automaticamente formulários extensos de cand
 1. Clone ou baixe este repositório.
 2. Abra o Chrome e vá para `chrome://extensions/`.
 3. Ative o **Modo do desenvolvedor** (canto superior direito).
-4. Clique em **Carregar sem compactação** e selecione a pasta `jobphantom`.
+4. Clique em **Carregar sem compactação** e selecione a pasta `formphantom`.
 5. A extensão aparecerá na barra de ferramentas.
 
 ## Como usar
@@ -31,7 +31,7 @@ Extensão de Chrome para preencher automaticamente formulários extensos de cand
 ## Estrutura
 
 ```
-jobphantom/
+formphantom/
 ├── manifest.json
 ├── background.js
 ├── popup/
