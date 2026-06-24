@@ -1,6 +1,6 @@
-# Dev Form Autofill
+# JobPhantom
 
-Extensão de Chrome para preencher automaticamente formulários extensos de contratação e vagas de desenvolvedor.
+Extensão de Chrome para preencher automaticamente formulários extensos de candidatura a vagas.
 
 ## Funcionalidades
 
@@ -16,7 +16,7 @@ Extensão de Chrome para preencher automaticamente formulários extensos de cont
 1. Clone ou baixe este repositório.
 2. Abra o Chrome e vá para `chrome://extensions/`.
 3. Ative o **Modo do desenvolvedor** (canto superior direito).
-4. Clique em **Carregar sem compactação** e selecione a pasta `dev-form-autofill`.
+4. Clique em **Carregar sem compactação** e selecione a pasta `jobphantom`.
 5. A extensão aparecerá na barra de ferramentas.
 
 ## Como usar
@@ -31,7 +31,7 @@ Extensão de Chrome para preencher automaticamente formulários extensos de cont
 ## Estrutura
 
 ```
-dev-form-autofill/
+jobphantom/
 ├── manifest.json
 ├── background.js
 ├── popup/
