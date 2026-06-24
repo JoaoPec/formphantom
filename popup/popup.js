@@ -98,9 +98,20 @@ function normalizeSpaces(str) {
   return String(str || '').replace(/\s+/g, ' ').trim();
 }
 
+function stripPdfIconGlyphs(str) {
+  return String(str || '')
+    .replace(/[\u0080-\u009f]/g, ' ')
+    .replace(/[•–—]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function normalizeUrl(url) {
   if (!url) return '';
-  const cleaned = url.replace(/[),.;]+$/, '');
+  const cleaned = String(url)
+    .replace(/^mailto:/i, '')
+    .replace(/[),.;]+$/, '');
+  if (/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(cleaned)) return '';
   return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
 }
 
@@ -113,23 +124,35 @@ function splitResumeLines(text) {
   return String(text || '')
     .replace(/\r/g, '\n')
     .split(/\n+/)
-    .map(line => normalizeSpaces(line))
+    .map(line => stripPdfIconGlyphs(line))
     .filter(Boolean);
 }
 
 function isSectionHeading(line) {
-  return /^(resumo|perfil|objetivo|experi[eê]ncia|forma[cç][aã]o|educa[cç][aã]o|skills|compet[eê]ncias|habilidades|projetos|idiomas|certifica[cç][oõ]es|contato)$/i.test(line);
+  return /^(resumo|perfil|objetivo|experi[eê]ncia|forma[cç][aã]o|educa[cç][aã]o|skills|compet[eê]ncias|habilidades|projetos|idiomas|certifica[cç][oõ]es|contato|links detectados)\b/i.test(line);
+}
+
+function stripContactDetails(line) {
+  return stripPdfIconGlyphs(line)
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig, ' ')
+    .replace(/(?:\+?55[-.\s]*)?(?:\(?\d{2}\)?[-.\s]*)?(?:9?\d{4})[-.\s]?\d{4}/g, ' ')
+    .replace(/(?:https?:\/\/|www\.)[^\s),;]+/gi, ' ')
+    .replace(/\b[a-z0-9-]+\.(?:com|dev|app|io|net|org|com\.br)(?:\/[^\s),;]*)?/gi, ' ')
+    .replace(/[#|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function extractFullName(lines, text) {
-  const badLine = /(curr[ií]culo|resume|email|e-mail|telefone|phone|linkedin|github|portfolio|www\.|https?:|@)/i;
-  const candidates = lines.slice(0, 12).filter(line => {
-    const words = line.split(/\s+/);
+  const badLine = /(curr[ií]culo|resume|email|e-mail|telefone|phone|linkedin|github|portfolio|www\.|https?:|@|resumo|experi[eê]ncia|forma[cç][aã]o|skills)/i;
+  const candidates = lines.slice(0, 10).map(stripContactDetails).filter(line => {
+    const words = line.split(/\s+/).filter(Boolean);
     return words.length >= 2
       && words.length <= 6
       && !badLine.test(line)
       && !isSectionHeading(line)
-      && !/\d/.test(line);
+      && !/\d/.test(line)
+      && words.every(word => /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]+$/.test(word));
   });
   if (candidates.length) return candidates[0];
   const nearEmail = text.match(/(?:^|\n)\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ']+(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ']+){1,5})\s+(?:[\w._%+-]+@)/);
@@ -150,39 +173,77 @@ function extractSection(lines, headingRegex, stopRegex, maxLines = 4) {
 
 function extractSkills(lines, text) {
   const known = [
-    'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'Django',
+    'JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js', 'NestJS', 'Python', 'Django',
     'Flask', 'Java', 'Spring', 'C#', '.NET', 'PHP', 'Laravel', 'Ruby', 'Rails',
     'Go', 'Rust', 'SQL', 'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Docker',
     'Kubernetes', 'AWS', 'Azure', 'GCP', 'Git', 'GraphQL', 'REST', 'HTML', 'CSS',
-    'Tailwind', 'Vue', 'Angular'
+    'Tailwind', 'Vue', 'Angular', 'Linux', 'Nginx', 'PIX'
   ];
-  const skillSection = extractSection(
-    lines,
-    /^(skills|compet[eê]ncias|habilidades|tecnologias|stack)\b/i,
-    /^(experi[eê]ncia|forma[cç][aã]o|educa[cç][aã]o|projetos|idiomas|certifica[cç][oõ]es)\b/i,
-    5
-  );
+  const skillStart = lines.findIndex(line => {
+    const norm = line.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return /^(skills|competencias|habilidades|tecnologias)\b/.test(norm)
+      || /^(stack|stack tecnico|stack tecnica)$/.test(norm);
+  });
+  let skillSection = '';
+  if (skillStart !== -1) {
+    const collected = [];
+    for (const line of lines.slice(skillStart + 1)) {
+      if (/^(experi[eê]ncia|forma[cç][aã]o|educa[cç][aã]o|projetos|idiomas|certifica[cç][oõ]es|links detectados)\b/i.test(line)) break;
+      collected.push(line);
+      if (collected.length >= 6) break;
+    }
+    skillSection = normalizeSpaces(collected.join(' '));
+  }
   if (skillSection) return skillSection;
   const found = known.filter(skill => new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text));
   return found.slice(0, 12).join(', ');
 }
 
+function extractLinks(text) {
+  const inlineText = normalizeSpaces(text);
+  const explicitUrls = inlineText.match(/(?:https?:\/\/|www\.)[^\s),;]+/gi) || [];
+  const bareDomains = inlineText.match(/\b[a-z0-9-]+\.(?:com|dev|app|io|net|org|com\.br)(?:\/[^\s),;]*)?/gi) || [];
+  return [...new Set([...explicitUrls, ...bareDomains].map(normalizeUrl).filter(Boolean))];
+}
+
+function extractLocation(lines, inlineText) {
+  const ufMatch = lines.slice(0, 20)
+    .map(line => line.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ]+(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ]+){0,3})\s*[-,]\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/))
+    .find(Boolean);
+  if (ufMatch) return { city: ufMatch[1], state: ufMatch[2], country: 'Brasil' };
+
+  const brazilLine = lines.slice(0, 20).find(line => /\bBrasil\b/i.test(line));
+  if (brazilLine) {
+    const cityMatch = brazilLine.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ]+(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ]+){0,3})\s*,\s*Brasil\b/i);
+    if (cityMatch) return { city: cityMatch[1], country: 'Brasil' };
+  }
+
+  const remoteMatch = inlineText.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ]+(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ]+){0,3})\s*,\s*Brasil\s*\(Remoto\)/i);
+  if (remoteMatch) return { city: remoteMatch[1], country: 'Brasil' };
+
+  return {};
+}
+
+function cleanRoleLine(line) {
+  return stripContactDetails(line)
+    .replace(/\b(LinkedIn|GitHub|Portfolio|Portfólio)\b.*$/i, '')
+    .trim();
+}
+
 function extractResumeProfile(text) {
   const lines = splitResumeLines(text);
-  const inlineText = normalizeSpaces(text);
+  const inlineText = stripPdfIconGlyphs(text);
   const profile = {};
 
   profile.email = firstMatch(inlineText, /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-  profile.phone = firstMatch(inlineText, /(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?(?:9?\d{4})[-.\s]?\d{4}/);
+  profile.phone = firstMatch(inlineText, /(?:\+?55[-.\s]*)?(?:\(?\d{2}\)?[-.\s]*)?(?:9?\d{4})[-.\s]?\d{4}/);
   profile.cpf = firstMatch(inlineText, /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/);
   profile.postalCode = firstMatch(inlineText, /\b\d{5}-?\d{3}\b/);
 
-  const linkedin = inlineText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s),;]+/i);
-  const github = inlineText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[^\s),;]+/i);
-  const urls = inlineText.match(/(?:https?:\/\/|www\.)[^\s),;]+/gi) || [];
-  profile.linkedin = linkedin ? normalizeUrl(linkedin[0]) : '';
-  profile.github = github ? normalizeUrl(github[0]) : '';
-  profile.portfolio = normalizeUrl((urls.find(url => !/linkedin\.com|github\.com/i.test(url)) || ''));
+  const links = extractLinks(inlineText);
+  profile.linkedin = links.find(url => /linkedin\.com\/in\//i.test(url)) || '';
+  profile.github = links.find(url => /github\.com\//i.test(url)) || '';
+  profile.portfolio = links.find(url => !/linkedin\.com|github\.com|mailto:/i.test(url)) || '';
 
   profile.fullName = extractFullName(lines, text);
   if (profile.fullName) {
@@ -191,14 +252,11 @@ function extractResumeProfile(text) {
     profile.lastName = parts.slice(1).join(' ');
   }
 
-  const location = inlineText.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ]+(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ]+){0,3})\s*[-,]\s*([A-Z]{2})\b/);
-  if (location) {
-    profile.city = location[1];
-    profile.state = location[2];
-    profile.country = 'Brasil';
-  }
+  Object.assign(profile, extractLocation(lines, inlineText));
 
-  const roleLine = lines.slice(0, 16).find(line => /(desenvolvedor|developer|engenheiro|engineer|software|full stack|frontend|front-end|backend|back-end|analista|tech lead|arquiteto)/i.test(line));
+  const roleLine = lines.slice(0, 16)
+    .map(cleanRoleLine)
+    .find(line => /(desenvolvedor|developer|engenheiro|engineer|software|full stack|frontend|front-end|backend|back-end|analista|tech lead|arquiteto)/i.test(line));
   profile.currentRole = roleLine || '';
 
   const years = inlineText.match(/(\d{1,2})\+?\s+anos?\s+(?:de\s+)?experi[eê]ncia/i);
@@ -213,7 +271,7 @@ function extractResumeProfile(text) {
   profile.education = extractSection(
     lines,
     /^(forma[cç][aã]o|educa[cç][aã]o|academic|education)\b/i,
-    /^(experi[eê]ncia|skills|compet[eê]ncias|habilidades|projetos|idiomas|certifica[cç][oõ]es)\b/i,
+    /^(experi[eê]ncia|skills|compet[eê]ncias|habilidades|projetos|idiomas|certifica[cç][oõ]es|links detectados)\b/i,
     5
   );
   profile.skills = extractSkills(lines, inlineText);
@@ -221,14 +279,18 @@ function extractResumeProfile(text) {
   return Object.fromEntries(Object.entries(profile).filter(([, value]) => normalizeSpaces(value)));
 }
 
-function mergeProfileWithResume(profile, resumeProfile) {
+function mergeProfileWithResume(profile, resumeProfile, options = {}) {
   const merged = { ...profile };
   const imported = [];
   const skipped = [];
+  const replaced = [];
 
   for (const [key, value] of Object.entries(resumeProfile)) {
     if (!normalizeSpaces(value)) continue;
-    if (!normalizeSpaces(merged[key])) {
+    if (options.overwrite && normalizeSpaces(merged[key]) && merged[key] !== value) {
+      merged[key] = value;
+      replaced.push(key);
+    } else if (!normalizeSpaces(merged[key])) {
       merged[key] = value;
       imported.push(key);
     } else {
@@ -236,7 +298,12 @@ function mergeProfileWithResume(profile, resumeProfile) {
     }
   }
 
-  return { merged, imported, skipped };
+  if (options.overwrite && resumeProfile.city && !resumeProfile.state && normalizeSpaces(merged.state)) {
+    merged.state = '';
+    replaced.push('state');
+  }
+
+  return { merged, imported, skipped, replaced };
 }
 
 function labelList(keys) {
@@ -246,7 +313,7 @@ function labelList(keys) {
 function applyResumeToProfile(resumeText, options = {}) {
   const resumeProfile = extractResumeProfile(resumeText);
   chrome.storage.local.get(['profile'], (res) => {
-    const { merged, imported, skipped } = mergeProfileWithResume(res.profile || {}, resumeProfile);
+    const { merged, imported, skipped, replaced } = mergeProfileWithResume(res.profile || {}, resumeProfile, options);
 
     if (!Object.keys(resumeProfile).length) {
       showNotice('#pdfImportSummary', 'Extraí o texto, mas não encontrei dados de perfil com confiança. Você ainda pode copiar trechos do preview manualmente.', 'warning');
@@ -256,11 +323,14 @@ function applyResumeToProfile(resumeText, options = {}) {
     chrome.storage.local.set({ profile: merged }, () => {
       fillProfileForm(merged);
 
-      if (imported.length) {
-        const message = `<strong>${imported.length} campo(s) importado(s):</strong> ${labelList(imported)}. Revise a aba Perfil antes de preencher candidaturas.`;
+      if (imported.length || replaced.length) {
+        const parts = [];
+        if (imported.length) parts.push(`<strong>${imported.length} campo(s) importado(s):</strong> ${labelList(imported)}`);
+        if (replaced.length) parts.push(`<strong>${replaced.length} campo(s) atualizado(s):</strong> ${labelList(replaced)}`);
+        const message = `${parts.join('. ')}. Revise a aba Perfil antes de preencher candidaturas.`;
         showNotice('#pdfImportSummary', message);
         showNotice('#profileImportNotice', message);
-        log(`Perfil atualizado pelo PDF: ${labelList(imported)}.`);
+        log(`Perfil atualizado pelo PDF: ${labelList([...imported, ...replaced])}.`);
       } else {
         const skippedText = skipped.length ? ` Dados detectados já existiam no perfil: ${labelList(skipped)}.` : '';
         showNotice('#pdfImportSummary', `PDF lido com sucesso, mas nenhum campo vazio precisava ser preenchido.${skippedText}`, 'warning');
@@ -294,6 +364,21 @@ function textContentToLines(textContent) {
   return lines;
 }
 
+async function getPageLinks(page) {
+  try {
+    const annotations = await page.getAnnotations();
+    return annotations.map(annot => annot.url).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function appendDetectedLinks(text, links) {
+  const cleanLinks = [...new Set(links.map(link => String(link || '').trim()).filter(Boolean))];
+  if (!cleanLinks.length) return text;
+  return `${text}\n\nLinks detectados\n${cleanLinks.join('\n')}`;
+}
+
 async function processPdfFile(file) {
   if (!file) return;
   $('#pdfStatus').textContent = 'Processando PDF...';
@@ -303,13 +388,16 @@ async function processPdfFile(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pages = [];
+    const links = [];
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       pages.push(textContentToLines(textContent).join('\n'));
+      links.push(...await getPageLinks(page));
     }
-    const cleaned = pages.join('\n\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-    chrome.storage.local.set({ resumeText: cleaned, resumeFileName: file.name }, () => {
+    const extractedText = pages.join('\n\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    const cleaned = appendDetectedLinks(extractedText, links);
+    chrome.storage.local.set({ resumeText: cleaned, resumeFileName: file.name, resumeLinks: links }, () => {
       $('#pdfStatus').textContent = `PDF processado: ${file.name} (${pdf.numPages} páginas)`;
       $('#pdfTextPreview').textContent = cleaned.slice(0, 2000);
       $('#pdfPreview').classList.remove('hidden');
@@ -332,6 +420,16 @@ $('#btnImportPdfProfile').addEventListener('click', () => {
       return;
     }
     applyResumeToProfile(res.resumeText);
+  });
+});
+
+$('#btnReplacePdfProfile').addEventListener('click', () => {
+  chrome.storage.local.get(['resumeText'], (res) => {
+    if (!res.resumeText) {
+      showNotice('#pdfImportSummary', 'Anexe um PDF antes de atualizar dados do perfil.', 'warning');
+      return;
+    }
+    applyResumeToProfile(res.resumeText, { overwrite: true });
   });
 });
 

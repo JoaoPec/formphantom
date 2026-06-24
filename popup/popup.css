@@ -262,7 +262,6 @@ legend {
 
 .pdf-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 10px;
 }
