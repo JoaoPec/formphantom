@@ -4,6 +4,12 @@
 
 Extensão de Chrome para preencher automaticamente formulários extensos de candidatura a vagas.
 
+<!-- DEMO: grave um GIF de 3-5s preenchendo um formulário (LinkedIn/Gupy), salve em docs/demo.gif e descomente o bloco abaixo
+<p align="center">
+  <img src="docs/demo.gif" width="80%" alt="FormPhantom preenchendo um formulário automaticamente">
+</p>
+-->
+
 ## Funcionalidades
 
 - **Perfil persistente**: cadastre seus dados uma única vez.
