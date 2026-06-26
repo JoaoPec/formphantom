@@ -14,10 +14,12 @@ Extensão de Chrome para preencher automaticamente formulários extensos de cand
 
 - **Perfil persistente**: cadastre seus dados uma única vez.
 - **Leitura de PDF**: anexe seu currículo em PDF e a extensão extrai o texto automaticamente.
+- **Anexo automático do currículo**: o PDF é guardado e reanexado nos campos de upload da candidatura (inclusive os escondidos por ATS).
 - **Detecção automática de campos**: funciona em formulários genéricos e nas principais plataformas de RH.
-- **Mapeamento de plataformas**: suporte otimizado para LinkedIn, Gupy, Greenhouse, Lever, Workable, Indeed, Vagas.com, Catho, InfoJobs e Kenoby.
+- **Mapeamento de plataformas**: suporte otimizado para LinkedIn, Gupy, Greenhouse, Lever, Workable, Indeed, Vagas.com, Catho, InfoJobs, Kenoby, Solides, Abler, Quickin, 99jobs, inHire, SmartRecruiters, Jobvite e Pandapé.
+- **Formulários multi-step**: a sugestão reabre automaticamente a cada nova etapa de formulários em várias páginas/SPA.
 - **Modo de revisão**: visualize e edite os valores antes de preencher, ou use o modo automático.
-- **Matching inteligente**: algoritmo de pontuação por heurísticas e palavras-chave para identificar o campo certo, mesmo em sites desconhecidos.
+- **Matching inteligente**: pontuação por heurísticas e palavras-chave, com sinônimos (sim/não, gênero, etnia), conversão estado↔UF e match por faixa numérica para selects e radios (salário, anos de experiência).
 
 ## Como instalar (modo desenvolvedor)
 

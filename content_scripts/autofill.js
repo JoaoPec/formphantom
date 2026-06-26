@@ -69,6 +69,116 @@
       .replace(/\s+/g, ' ').trim();
   }
 
+  const UF_BY_NAME = {
+    'acre': 'ac', 'alagoas': 'al', 'amapa': 'ap', 'amazonas': 'am', 'bahia': 'ba',
+    'ceara': 'ce', 'distrito federal': 'df', 'espirito santo': 'es', 'goias': 'go',
+    'maranhao': 'ma', 'mato grosso': 'mt', 'mato grosso do sul': 'ms', 'minas gerais': 'mg',
+    'para': 'pa', 'paraiba': 'pb', 'parana': 'pr', 'pernambuco': 'pe', 'piaui': 'pi',
+    'rio de janeiro': 'rj', 'rio grande do norte': 'rn', 'rio grande do sul': 'rs',
+    'rondonia': 'ro', 'roraima': 'rr', 'santa catarina': 'sc', 'sao paulo': 'sp',
+    'sergipe': 'se', 'tocantins': 'to'
+  };
+  const NAME_BY_UF = Object.fromEntries(Object.entries(UF_BY_NAME).map(([name, uf]) => [uf, name]));
+
+  // Grupos de termos equivalentes (g\u00eanero, etnia, sim/n\u00e3o, prefiro n\u00e3o informar).
+  const SYNONYM_GROUPS = [
+    ['sim', 'yes', 'true', 'on', 'afirmativo'],
+    ['nao', 'no', 'false', 'negativo'],
+    ['masculino', 'male', 'homem'],
+    ['feminino', 'female', 'mulher'],
+    ['prefiro nao informar', 'prefiro nao responder', 'nao informar', 'nao declarar', 'prefer not to say', 'prefer not to answer', 'rather not say'],
+    ['nao binario', 'non binary', 'nonbinary'],
+    ['outro', 'outros', 'other'],
+    ['branco', 'branca', 'white'],
+    ['preto', 'preta', 'negro', 'negra', 'black'],
+    ['pardo', 'parda', 'brown', 'mixed'],
+    ['amarelo', 'amarela', 'asian', 'asiatico'],
+    ['indigena', 'indigenous', 'native'],
+    ['solteiro', 'solteira', 'single'],
+    ['casado', 'casada', 'married'],
+  ];
+
+  function valueAliases(value) {
+    const v = normalize(value);
+    if (!v) return [];
+    const set = new Set([v]);
+    for (const group of SYNONYM_GROUPS) {
+      if (group.some(term => v === term || v.includes(term) || term.includes(v))) {
+        group.forEach(term => set.add(term));
+      }
+    }
+    if (UF_BY_NAME[v]) set.add(UF_BY_NAME[v]);
+    if (NAME_BY_UF[v]) set.add(NAME_BY_UF[v]);
+    return [...set];
+  }
+
+  // Converte texto monet\u00e1rio/num\u00e9rico em n\u00famero (R$ 5.000,00 -> 5000).
+  function parseNumber(str) {
+    const cleaned = String(str).replace(/[^\d.,]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isFinite(num) ? num : null;
+  }
+
+  // Casa um valor num\u00e9rico com a faixa correta (ex.: "R$ 5.000 a R$ 7.000", "acima de 10 anos").
+  function findRangeOption(options, value) {
+    const num = parseNumber(value);
+    if (num === null) return null;
+    for (const opt of options) {
+      const t = opt.text.toLowerCase();
+      const nums = (t.match(/\d[\d.,]*/g) || []).map(parseNumber).filter(n => n !== null);
+      if (!nums.length) continue;
+      const lo = Math.min(...nums);
+      const hi = Math.max(...nums);
+      if (/(acima|mais de|maior|superior|a partir|\+|>)/.test(t) && num >= lo) return opt.element;
+      if (/(abaixo|menos de|menor|ate|inferior|<)/.test(t) && num <= hi) return opt.element;
+      if (nums.length >= 2 && num >= lo && num <= hi) return opt.element;
+      if (nums.length === 1 && Math.abs(num - nums[0]) < 0.5) return opt.element;
+    }
+    return null;
+  }
+
+  function base64ToBlob(base64, type) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: type || 'application/pdf' });
+  }
+
+  function setFileInput(el, fileData) {
+    if (!el || !fileData || !fileData.data) return false;
+    try {
+      const blob = base64ToBlob(fileData.data, fileData.type);
+      const file = new File([blob], fileData.name || 'curriculo.pdf', { type: fileData.type || 'application/pdf' });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      el.files = dt.files;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    } catch (e) {
+      console.error('[FormPhantom] Falha ao anexar curr\u00edculo:', e);
+      return false;
+    }
+  }
+
+  // Encontra os inputs de arquivo que parecem ser o curr\u00edculo (inclui os escondidos por ATS).
+  function detectResumeFileFields() {
+    const els = Array.from(document.querySelectorAll('input[type="file"]'));
+    if (!els.length) return [];
+    const RESUME_KW = ['curriculo', 'curriculum', 'resume', 'cv', 'anexo', 'anexar', 'arquivo', 'attach'];
+    const matched = els.filter(el => {
+      const meta = window.__DFA_FieldDetector.getFieldMetadata(el);
+      const accept = normalize(el.getAttribute('accept') || '');
+      const text = ' ' + normalize(meta.text) + ' ' + accept + ' ';
+      return RESUME_KW.some(kw => text.includes(' ' + kw + ' '));
+    });
+    if (matched.length) return matched;
+    const pdfEls = els.filter(el => /pdf|doc/.test(normalize(el.getAttribute('accept') || '')));
+    if (pdfEls.length === 1) return pdfEls;
+    if (els.length === 1) return els;
+    return [];
+  }
+
   function scoreField(field, key) {
     const labelNorm = normalize(field.label);
     if (key === 'fullName' && /\b(primeiro nome|first name|sobrenome|last name)\b/.test(labelNorm)) return 0;
@@ -152,12 +262,23 @@
   function findSelectOption(field, value) {
     if (!field.options || !value) return null;
     const normVal = normalize(value);
+    const aliases = valueAliases(value);
+
+    // 1. igualdade exata (valor ou qualquer sinônimo)
     for (const opt of field.options) {
-      if (normalize(opt.text) === normVal || normalize(opt.value) === normVal) return opt.element;
+      const ot = normalize(opt.text);
+      const ov = normalize(opt.value);
+      if (aliases.some(a => ot === a || ov === a)) return opt.element;
     }
+    // 2. faixa numérica (salário, anos de experiência)
+    const rangeMatch = findRangeOption(field.options, value);
+    if (rangeMatch) return rangeMatch;
+    // 3. inclusão por sinônimo (>=3 chars para evitar falsos positivos como "no" em "nome")
     for (const opt of field.options) {
-      if (normalize(opt.text).includes(normVal) || normVal.includes(normalize(opt.text))) return opt.element;
+      const ot = normalize(opt.text);
+      if (aliases.some(a => a.length > 2 && (ot.includes(a) || a.includes(ot)))) return opt.element;
     }
+    // 4. sobreposição de palavras
     const valWords = normVal.split(/\s+/).filter(w => w.length > 2);
     for (const opt of field.options) {
       const optWords = normalize(opt.text).split(/\s+/);
@@ -169,18 +290,22 @@
   function findRadioOption(fields, value) {
     if (!value) return null;
     const normVal = normalize(value);
-    for (const f of fields) {
-      const label = f.label || f.element.value || '';
-      if (normalize(label) === normVal || normalize(f.element.value) === normVal) return f.element;
-      if (normalize(label).includes(normVal) || normVal.includes(normalize(label))) return f.element;
-    }
-    const valLower = value.toLowerCase().trim();
-    const isYes = ['sim','yes','true','1'].includes(valLower);
-    const isNo = ['nao','não','no','false','0'].includes(valLower);
+    const aliases = valueAliases(value);
+
+    // 1. igualdade exata (label ou value, incluindo sinônimos)
     for (const f of fields) {
       const label = normalize(f.label || f.element.value || '');
-      if (isYes && (label.includes('sim') || label.includes('yes'))) return f.element;
-      if (isNo && (label.includes('nao') || label.includes('não') || label.includes('no'))) return f.element;
+      const optVal = normalize(f.element.value);
+      if (aliases.some(a => label === a || optVal === a)) return f.element;
+    }
+    // 2. faixa numérica
+    const asOptions = fields.map(f => ({ text: f.label || f.element.value || '', element: f.element }));
+    const rangeMatch = findRangeOption(asOptions, value);
+    if (rangeMatch) return rangeMatch;
+    // 3. inclusão por sinônimo (>=3 chars para evitar falsos positivos)
+    for (const f of fields) {
+      const label = normalize(f.label || f.element.value || '');
+      if (aliases.some(a => a.length > 2 && (label.includes(a) || a.includes(label)))) return f.element;
     }
     return null;
   }
@@ -282,18 +407,28 @@
   function buildFillPlan(profile, platformMappings) {
     const plan = [];
     const profileKeys = Object.keys(profile).filter(k => profile[k] !== '' && profile[k] !== undefined && profile[k] !== null);
+    const usedElements = new Set();
     if (platformMappings) {
       for (const { element, key } of platformMappings.mappings) {
+        if (usedElements.has(element)) continue;
+        if (key === 'resumeFile') {
+          if (profile.resumeFile && profile.resumeFile.data) {
+            plan.push({ type: 'file', element, key, value: profile.resumeFile, source: 'platform-file' });
+            usedElements.add(element);
+          }
+          continue;
+        }
         if (profile[key] !== undefined && profile[key] !== '') {
           const field = window.__DFA_FieldDetector.getFieldMetadata(element);
           plan.push({ element, key, value: formatValueForField(field, key, profile[key]), source: 'platform' });
+          usedElements.add(element);
         }
       }
     }
     const { fields, radioGroups } = detectFields();
     const genericMatches = matchGenericFields(fields, profileKeys);
     const radioMatches = matchRadioGroups(radioGroups, profileKeys);
-    const usedElements = new Set(plan.map(p => p.element));
+    plan.forEach(p => p.element && usedElements.add(p.element));
     for (const m of genericMatches) {
       if (!usedElements.has(m.field.element)) {
         plan.push({ element: m.field.element, key: m.key, value: formatValueForField(m.field, m.key, profile[m.key]), source: m.source });
@@ -306,13 +441,24 @@
         plan.push({ type: 'radio', name: m.name, fields: m.fields, key: m.key, value: val, source: m.source });
       }
     }
+    // Anexar currículo nos inputs de arquivo detectados (se ainda não cobertos por mapper)
+    if (profile.resumeFile && profile.resumeFile.data) {
+      for (const el of detectResumeFileFields()) {
+        if (usedElements.has(el)) continue;
+        plan.push({ type: 'file', element: el, key: 'resumeFile', value: profile.resumeFile, source: 'resume-file' });
+        usedElements.add(el);
+      }
+    }
     return { plan, platform: platformMappings?.platform || 'generic' };
   }
 
   async function executePlan(plan) {
     const results = [];
     for (const item of plan) {
-      if (item.type === 'radio') {
+      if (item.type === 'file') {
+        const ok = setFileInput(item.element, item.value);
+        results.push({ ...item, success: ok, reason: ok ? undefined : 'File not attached' });
+      } else if (item.type === 'radio') {
         const radioEl = findRadioOption(item.fields, item.value);
         if (radioEl) {
           radioEl.checked = true;
@@ -331,15 +477,26 @@
   }
 
   function serializablePlan(plan) {
-    return plan.map(p => ({
-      key: p.key,
-      value: p.value,
-      source: p.source,
-      type: p.type || p.element?.tagName?.toLowerCase() || 'text',
-      label: p.element
-        ? (window.__DFA_FieldDetector.getFieldMetadata(p.element).label || p.element.placeholder || p.element.name || '')
-        : (p.fields?.[0]?.label || p.name || ''),
-    }));
+    return plan.map(p => {
+      if (p.type === 'file') {
+        return {
+          key: p.key,
+          value: p.value?.name || 'currículo.pdf',
+          source: p.source,
+          type: 'file',
+          label: 'Anexar currículo',
+        };
+      }
+      return {
+        key: p.key,
+        value: p.value,
+        source: p.source,
+        type: p.type || p.element?.tagName?.toLowerCase() || 'text',
+        label: p.element
+          ? (window.__DFA_FieldDetector.getFieldMetadata(p.element).label || p.element.placeholder || p.element.name || '')
+          : (p.fields?.[0]?.label || p.name || ''),
+      };
+    });
   }
 
   function hasUsableProfile(profile) {
@@ -382,39 +539,71 @@
     return plan.length >= 2 && matchedFieldCount >= 2 && (platformKnown || hasJobSignal);
   }
 
-  function autoPromptKey() {
-    return `__formphantom_auto_prompted:${location.origin}${location.pathname}`;
+  // Assinatura do conjunto de campos detectados, para não repetir o prompt na mesma etapa.
+  function planSignature(serializable) {
+    return serializable.map(item => `${item.key}:${item.label}`).join('|');
+  }
+
+  const promptedSignatures = new Set();
+  let autoCheckTimer = null;
+  const MAX_AUTO_PROMPTS = 12;
+
+  function overlayIsOpen() {
+    const el = document.getElementById('dfa-overlay');
+    return Boolean(el) && el.style.display !== 'none';
+  }
+
+  function runAutoCheck() {
+    if (overlayIsOpen()) return;
+    if (promptedSignatures.size >= MAX_AUTO_PROMPTS) return;
+
+    chrome.storage.local.get(['profile', 'resumeText', 'resumeFile'], (res) => {
+      const profile = res.profile || {};
+      if (!hasUsableProfile(profile)) return;
+
+      const data = { ...profile, resumeText: res.resumeText || '', resumeFile: res.resumeFile || null };
+      const platformMappings = getPlatformMappings();
+      const { plan, platform } = buildFillPlan(data, platformMappings);
+      if (!looksLikeJobApplication(platformMappings, plan)) return;
+
+      const serializable = serializablePlan(plan);
+      if (!serializable.length) return;
+
+      const signature = planSignature(serializable);
+      if (promptedSignatures.has(signature)) return;
+      promptedSignatures.add(signature);
+
+      window.__DFA_Overlay.show(plan, serializable, async (approvedPlan) => {
+        const results = await executePlan(approvedPlan);
+        window.__DFA_Overlay.hide();
+        console.log('[FormPhantom] Auto prompt results:', results);
+      });
+      console.log(`[FormPhantom] Sugestão automática aberta. ${serializable.length} campos detectados (${platform}).`);
+    });
+  }
+
+  function scheduleAutoCheck(delay = 700) {
+    clearTimeout(autoCheckTimer);
+    autoCheckTimer = setTimeout(runAutoCheck, delay);
   }
 
   function maybeShowAutoPrompt() {
     if (window.__DFA_AutoPromptStarted) return;
     window.__DFA_AutoPromptStarted = true;
 
-    window.setTimeout(() => {
-      if (sessionStorage.getItem(autoPromptKey()) === '1') return;
-      if (document.getElementById('dfa-overlay')) return;
+    scheduleAutoCheck(900);
 
-      chrome.storage.local.get(['profile', 'resumeText'], (res) => {
-        const profile = res.profile || {};
-        if (!hasUsableProfile(profile)) return;
-
-        const data = { ...profile, resumeText: res.resumeText || '' };
-        const platformMappings = getPlatformMappings();
-        const { plan, platform } = buildFillPlan(data, platformMappings);
-        if (!looksLikeJobApplication(platformMappings, plan)) return;
-
-        const serializable = serializablePlan(plan);
-        if (!serializable.length) return;
-
-        sessionStorage.setItem(autoPromptKey(), '1');
-        window.__DFA_Overlay.show(plan, serializable, async (approvedPlan) => {
-          const results = await executePlan(approvedPlan);
-          window.__DFA_Overlay.hide();
-          console.log('[DevFormAutofill] Auto prompt results:', results);
-        });
-        console.log(`[DevFormAutofill] Sugestão automática aberta. ${serializable.length} campos detectados (${platform}).`);
-      });
-    }, 900);
+    // Reage a etapas adicionais (formulários multi-step / SPA) que injetam novos campos.
+    const observer = new MutationObserver((mutations) => {
+      const addedFields = mutations.some(m =>
+        Array.from(m.addedNodes).some(node =>
+          node.nodeType === 1 &&
+          (node.matches?.('input, select, textarea') || node.querySelector?.('input, select, textarea'))
+        )
+      );
+      if (addedFields) scheduleAutoCheck(700);
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

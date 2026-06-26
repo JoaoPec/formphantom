@@ -145,6 +145,83 @@
         'textarea[name="mensagem"], textarea[placeholder*="mensagem" i], textarea[placeholder*="apresentação" i]': 'coverLetter',
       }
     },
+    solides: {
+      host: /solides\.com|solides\.jobs|vagas\.solides/,
+      selectors: {
+        'input[name="name"], input[placeholder*="nome" i]': 'fullName',
+        'input[type="email"], input[placeholder*="mail" i]': 'email',
+        'input[type="tel"], input[placeholder*="telefone" i], input[placeholder*="celular" i]': 'phone',
+        'input[placeholder*="linkedin" i]': 'linkedin',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    abler: {
+      host: /abler\.com\.br/,
+      selectors: {
+        'input[placeholder*="nome" i]': 'fullName',
+        'input[type="email"], input[placeholder*="mail" i]': 'email',
+        'input[type="tel"], input[placeholder*="telefone" i], input[placeholder*="celular" i]': 'phone',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    quickin: {
+      host: /quickin\.io/,
+      selectors: {
+        'input[name="name"], input[placeholder*="nome" i]': 'fullName',
+        'input[type="email"]': 'email',
+        'input[type="tel"], input[placeholder*="telefone" i], input[placeholder*="celular" i]': 'phone',
+        'input[placeholder*="linkedin" i]': 'linkedin',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    jobs99: {
+      host: /99jobs\.com/,
+      selectors: {
+        'input[placeholder*="nome" i]': 'fullName',
+        'input[type="email"], input[placeholder*="mail" i]': 'email',
+        'input[type="tel"], input[placeholder*="telefone" i]': 'phone',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    inhire: {
+      host: /inhire\.app|inhire\.com\.br/,
+      selectors: {
+        'input[placeholder*="nome" i]': 'fullName',
+        'input[type="email"]': 'email',
+        'input[type="tel"], input[placeholder*="telefone" i], input[placeholder*="celular" i]': 'phone',
+        'input[placeholder*="linkedin" i]': 'linkedin',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    smartrecruiters: {
+      host: /smartrecruiters\.com/,
+      selectors: {
+        'input[name="firstName"]': 'firstName',
+        'input[name="lastName"]': 'lastName',
+        'input[name="email"], input[type="email"]': 'email',
+        'input[name="phoneNumber"], input[type="tel"]': 'phone',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    jobvite: {
+      host: /jobvite\.com/,
+      selectors: {
+        'input[name*="firstName" i]': 'firstName',
+        'input[name*="lastName" i]': 'lastName',
+        'input[type="email"]': 'email',
+        'input[type="tel"]': 'phone',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
+    pandape: {
+      host: /pandape\.com|pandape\.infojobs/,
+      selectors: {
+        'input[placeholder*="nome" i]': 'fullName',
+        'input[type="email"]': 'email',
+        'input[type="tel"], input[placeholder*="telefone" i]': 'phone',
+        'input[type="file"]': 'resumeFile',
+      }
+    },
   };
 
   function detectPlatform() {

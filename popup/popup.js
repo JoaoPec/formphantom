@@ -30,6 +30,16 @@ if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('lib/pdf.worker.min.js');
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 /* ---------- Tabs ---------- */
 function switchTab(tabId) {
   $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
@@ -588,9 +598,13 @@ async function processPdfFile(file) {
   $('#pdfStatus').textContent = 'Processando PDF...';
   hideNotice('#pdfImportSummary');
 
+  const MAX_ATTACH_BYTES = 8 * 1024 * 1024;
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const resumeFileData = file.size <= MAX_ATTACH_BYTES
+      ? { data: arrayBufferToBase64(arrayBuffer), name: file.name, type: file.type || 'application/pdf', size: file.size }
+      : null;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
     const pages = [];
     const links = [];
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -601,8 +615,9 @@ async function processPdfFile(file) {
     }
     const extractedText = pages.join('\n\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     const cleaned = appendDetectedLinks(extractedText, links);
-    chrome.storage.local.set({ resumeText: cleaned, resumeFileName: file.name, resumeLinks: links }, () => {
-      $('#pdfStatus').textContent = `PDF processado: ${file.name} (${pdf.numPages} páginas)`;
+    chrome.storage.local.set({ resumeText: cleaned, resumeFileName: file.name, resumeLinks: links, resumeFile: resumeFileData }, () => {
+      const attachNote = resumeFileData ? '' : ' (grande demais p/ anexar automaticamente)';
+      $('#pdfStatus').textContent = `PDF processado: ${file.name} (${pdf.numPages} páginas)${attachNote}`;
       $('#pdfTextPreview').textContent = cleaned.slice(0, 2000);
       $('#pdfPreview').classList.remove('hidden');
       log(`PDF "${file.name}" processado. ${cleaned.length} caracteres extraídos.`);
@@ -706,12 +721,12 @@ $('#btnFill').addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) { log('Nenhuma aba ativa.'); return; }
 
-  chrome.storage.local.get(['profile', 'resumeText'], (res) => {
+  chrome.storage.local.get(['profile', 'resumeText', 'resumeFile'], (res) => {
     if (!res.profile) { log('Configure seu perfil primeiro.'); return; }
     chrome.tabs.sendMessage(tab.id, {
       action: 'startAutofill',
       mode,
-      data: { ...res.profile, resumeText: res.resumeText || '' }
+      data: { ...res.profile, resumeText: res.resumeText || '', resumeFile: res.resumeFile || null }
     }, (response) => {
       if (chrome.runtime.lastError) {
         log('Erro: ' + chrome.runtime.lastError.message);

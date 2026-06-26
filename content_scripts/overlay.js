@@ -42,15 +42,21 @@
       label.textContent = item.label || item.key;
 
       let input;
-      if (item.value && item.value.length > 60) {
-        input = document.createElement('textarea');
-        input.rows = 3;
+      if (item.type === 'file') {
+        input = document.createElement('div');
+        input.className = 'dfa-file-pill';
+        input.textContent = '📎 ' + (item.value || 'currículo.pdf');
       } else {
-        input = document.createElement('input');
-        input.type = 'text';
+        if (item.value && item.value.length > 60) {
+          input = document.createElement('textarea');
+          input.rows = 3;
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+        }
+        input.value = item.value || '';
+        input.dataset.key = item.key;
       }
-      input.value = item.value || '';
-      input.dataset.key = item.key;
 
       info.appendChild(tag);
       info.appendChild(label);
@@ -94,9 +100,13 @@
       const approvedPlan = [];
       rows.forEach((row, idx) => {
         if (!row.querySelector('.dfa-check').checked) return;
-        const input = row.querySelector('.dfa-field-info input, .dfa-field-info textarea');
-        const val = input.value;
         const original = plan[idx];
+        if (original.type === 'file') {
+          approvedPlan.push({ ...original });
+          return;
+        }
+        const input = row.querySelector('.dfa-field-info input, .dfa-field-info textarea');
+        const val = input ? input.value : original.value;
         approvedPlan.push({ ...original, value: val });
       });
       if (approvedCallback) approvedCallback(approvedPlan);

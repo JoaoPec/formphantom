@@ -177,3 +177,17 @@
   color: #8b949e;
   padding: 20px;
 }
+
+.dfa-field-info .dfa-file-pill {
+  display: inline-block !important;
+  max-width: 100% !important;
+  background: #1f6feb20 !important;
+  border: 1px solid #1f6feb55 !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  color: #8fc1ff !important;
+  font-size: 12px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
